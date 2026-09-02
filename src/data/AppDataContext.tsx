@@ -23,6 +23,7 @@ interface AppDataValue {
   addActivity: (profileId: string, activity: Activity) => void
   updateActivity: (profileId: string, activity: Activity) => void
   deleteActivity: (profileId: string, activityId: string) => void
+  reorderActivities: (profileId: string, activities: Activity[]) => void
 
   dayMapping: DayMapping
   setDayMapping: (day: Weekday, profileId: string) => void
@@ -129,6 +130,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             : p,
         ),
       )
+    },
+    [profiles, persistProfiles],
+  )
+
+  const reorderActivities = useCallback(
+    (profileId: string, activities: Activity[]) => {
+      persistProfiles(profiles.map((p) => (p.id === profileId ? { ...p, activities } : p)))
     },
     [profiles, persistProfiles],
   )
@@ -273,6 +281,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       addActivity,
       updateActivity,
       deleteActivity,
+      reorderActivities,
       dayMapping,
       setDayMapping,
       today,
@@ -297,6 +306,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       addActivity,
       updateActivity,
       deleteActivity,
+      reorderActivities,
       dayMapping,
       setDayMapping,
       today,

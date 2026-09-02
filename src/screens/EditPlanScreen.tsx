@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useAppData } from '../data/AppDataContext'
 import type { Activity, Weekday } from '../types'
 import { parseTimeToMinutes } from '../utils/time'
-import { formatClock, formatDuration } from '../utils/time'
-import { CategoryDot } from '../components/CategoryTag'
+import { restackContiguously } from '../utils/reorderActivities'
 import { Sheet } from '../components/Sheet'
 import { ActivityForm } from '../components/ActivityForm'
+import { ActivityList } from '../components/ActivityList'
 
 const WEEKDAYS: [Weekday, string][] = [
   ['mon', 'Monday'],
@@ -28,6 +28,7 @@ export function EditPlanScreen() {
     addActivity,
     updateActivity,
     deleteActivity,
+    reorderActivities,
     dayMapping,
     setDayMapping,
   } = useAppData()
@@ -63,6 +64,10 @@ export function EditPlanScreen() {
   function handleDeleteProfile(id: string) {
     if (activeProfileId === id) setActiveProfileId(defaultProfileId)
     deleteProfile(id)
+  }
+
+  function handleReorder(ordered: Activity[]) {
+    reorderActivities(activeProfileId, restackContiguously(ordered))
   }
 
   return (
@@ -121,37 +126,7 @@ export function EditPlanScreen() {
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {sorted.map((activity) => (
-            <button
-              key={activity.id}
-              type="button"
-              onClick={() => setEditing(activity)}
-              className="flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
-            >
-              <div className="w-14 shrink-0 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                {formatClock(parseTimeToMinutes(activity.startTime))}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <CategoryDot category={activity.category} />
-                  <p className="truncate font-medium text-slate-800 dark:text-slate-100">
-                    {activity.title}
-                  </p>
-                  {activity.isFlexible && (
-                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                      Flexible
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {formatDuration(activity.durationMin)}
-                </p>
-              </div>
-              <span className="text-slate-300 dark:text-slate-600">›</span>
-            </button>
-          ))}
-        </div>
+        <ActivityList activities={sorted} onEdit={setEditing} onReorder={handleReorder} />
       )}
 
       <Sheet
