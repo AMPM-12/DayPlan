@@ -16,6 +16,7 @@ const THEME_KEY = 'dailyplan.theme.v1'
 const PROFILES_KEY = 'dailyplan.profiles.v1'
 const DAY_MAPPING_KEY = 'dailyplan.dayMapping.v1'
 const DEFAULT_PROFILE_ID_KEY = 'dailyplan.defaultProfileId.v1'
+const NOTIFICATIONS_ENABLED_KEY = 'dailyplan.notificationsEnabled.v1'
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
@@ -47,6 +48,8 @@ export interface PlanRepo {
   clearAllDayStates(): void
   exportData(): AppDataExport
   importData(data: AppDataExport): void
+  getNotificationsEnabled(): boolean
+  saveNotificationsEnabled(enabled: boolean): void
 }
 
 function emptyDayState(date: string): DayState {
@@ -173,6 +176,14 @@ class LocalStoragePlanRepo implements PlanRepo {
     this.saveDayMapping(data.dayMapping)
     this.clearAllDayStates()
     data.dayStates.forEach((state) => this.saveDayState(state))
+  }
+
+  getNotificationsEnabled(): boolean {
+    return localStorage.getItem(NOTIFICATIONS_ENABLED_KEY) === 'true'
+  }
+
+  saveNotificationsEnabled(enabled: boolean): void {
+    localStorage.setItem(NOTIFICATIONS_ENABLED_KEY, String(enabled))
   }
 }
 

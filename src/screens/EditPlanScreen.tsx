@@ -4,6 +4,11 @@ import type { Activity, AppDataExport, Weekday } from '../types'
 import { parseTimeToMinutes, todayDateString } from '../utils/time'
 import { restackContiguously } from '../utils/reorderActivities'
 import { parseAppDataExport } from '../utils/backup'
+import {
+  getNotificationPermission,
+  isNotificationSupported,
+  requestNotificationPermission,
+} from '../utils/notifications'
 import { Sheet } from '../components/Sheet'
 import { ActivityForm } from '../components/ActivityForm'
 import { ActivityList } from '../components/ActivityList'
@@ -34,6 +39,8 @@ export function EditPlanScreen() {
     setDayMapping,
     exportData,
     importData,
+    notificationsEnabled,
+    setNotificationsEnabled,
   } = useAppData()
 
   const [activeProfileId, setActiveProfileId] = useState(defaultProfileId)
@@ -51,6 +58,9 @@ export function EditPlanScreen() {
   const [importError, setImportError] = useState<string | null>(null)
   const [importDone, setImportDone] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifMessage, setNotifMessage] = useState<string | null>(null)
 
   const sorted = activeProfile
     ? [...activeProfile.activities].sort(
@@ -125,6 +135,33 @@ export function EditPlanScreen() {
     setImportDone(true)
   }
 
+  function closeNotif() {
+    setNotifOpen(false)
+  }
+
+  async function handleToggleNotifications() {
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false)
+      setNotifMessage(null)
+      return
+    }
+
+    if (!isNotificationSupported()) {
+      setNotifMessage("Notifications aren't supported on this browser or device.")
+      return
+    }
+
+    const permission = await requestNotificationPermission()
+    if (permission === 'granted') {
+      setNotificationsEnabled(true)
+      setNotifMessage(null)
+    } else if (permission === 'denied') {
+      setNotifMessage(
+        'Notifications are blocked. Enable them for this app in your browser or device settings, then try again.',
+      )
+    }
+  }
+
   return (
     <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
       <header className="mb-5 flex items-center justify-between">
@@ -180,6 +217,13 @@ export function EditPlanScreen() {
           className="text-xs font-medium text-indigo-600 dark:text-indigo-400"
         >
           Backup & restore →
+        </button>
+        <button
+          type="button"
+          onClick={() => setNotifOpen(true)}
+          className="text-xs font-medium text-indigo-600 dark:text-indigo-400"
+        >
+          Notifications →
         </button>
       </div>
 
@@ -404,6 +448,47 @@ export function EditPlanScreen() {
                 )}
               </div>
             </>
+          )}
+        </div>
+      </Sheet>
+
+      <Sheet open={notifOpen} onClose={closeNotif} title="Notifications">
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={handleToggleNotifications}
+            className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
+              notificationsEnabled
+                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+                : 'border-slate-200 dark:border-slate-700'
+            }`}
+          >
+            <span
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${
+                notificationsEnabled ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+              }`}
+            >
+              {notificationsEnabled ? '✓' : ''}
+            </span>
+            <div>
+              <p className="font-medium text-slate-900 dark:text-slate-100">
+                Activity notifications
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Get notified when a block is ending soon, and when the next one starts.
+              </p>
+            </div>
+          </button>
+
+          {notifMessage && (
+            <p className="text-sm text-red-600 dark:text-red-400">{notifMessage}</p>
+          )}
+
+          {notificationsEnabled && getNotificationPermission() === 'denied' && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              Permission was revoked outside the app, so notifications won't be delivered until
+              it's re-enabled in your browser or device settings.
+            </p>
           )}
         </div>
       </Sheet>

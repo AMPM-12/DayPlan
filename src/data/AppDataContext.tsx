@@ -21,6 +21,8 @@ import type {
 } from '../types'
 import { addDays, nowMinutes, todayDateString } from '../utils/time'
 import { resolveActivities } from '../utils/profiles'
+import { computeSchedule } from '../utils/schedule'
+import { useActivityNotifications } from '../hooks/useActivityNotifications'
 
 interface AppDataValue {
   profiles: PlanProfile[]
@@ -53,6 +55,9 @@ interface AppDataValue {
 
   exportData: () => AppDataExport
   importData: (data: AppDataExport) => void
+
+  notificationsEnabled: boolean
+  setNotificationsEnabled: (enabled: boolean) => void
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null)
@@ -62,6 +67,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [defaultProfileId, setDefaultProfileId] = useState<string>(() => planRepo.getDefaultProfileId())
   const [dayMapping, setDayMappingState] = useState<DayMapping>(() => planRepo.getDayMapping())
   const [today, setToday] = useState<DayState>(() => planRepo.getDayState(todayDateString()))
+  const [notificationsEnabled, setNotificationsEnabledState] = useState<boolean>(() =>
+    planRepo.getNotificationsEnabled(),
+  )
   const [theme, setThemeState] = useState<ThemePreference>(() => planRepo.getTheme())
 
   const persistProfiles = useCallback((next: PlanProfile[]) => {
@@ -171,6 +179,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     () => resolveActivities(today.date, today, profiles, dayMapping, defaultProfileId),
     [today, profiles, dayMapping, defaultProfileId],
   )
+
+  const setNotificationsEnabled = useCallback((enabled: boolean) => {
+    planRepo.saveNotificationsEnabled(enabled)
+    setNotificationsEnabledState(enabled)
+  }, [])
+
+  // Kept at the provider level (not inside a screen) so scheduled notification
+  // timers survive navigating between tabs. The `0` for nowMins is fine — only
+  // start/end/completed are used here, and those don't depend on the clock.
+  const notificationItems = useMemo(
+    () => computeSchedule(todayActivities, today.completedIds, today.override, 0),
+    [todayActivities, today.completedIds, today.override],
+  )
+  useActivityNotifications(notificationItems, notificationsEnabled)
 
   const setTodayProfileOverride = useCallback(
     (profileId: string | undefined) => {
@@ -319,6 +341,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       refreshIfNewDay,
       exportData,
       importData,
+      notificationsEnabled,
+      setNotificationsEnabled,
     }),
     [
       profiles,
@@ -346,6 +370,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       refreshIfNewDay,
       exportData,
       importData,
+      notificationsEnabled,
+      setNotificationsEnabled,
     ],
   )
 
