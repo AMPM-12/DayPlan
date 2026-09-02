@@ -15,6 +15,8 @@ import type {
   AppDataExport,
   DayMapping,
   DayState,
+  DocketTask,
+  DocketTaskStatus,
   PlanProfile,
   ThemePreference,
   Weekday,
@@ -23,6 +25,7 @@ import { addDays, nowMinutes, todayDateString } from '../utils/time'
 import { resolveActivities } from '../utils/profiles'
 import { computeSchedule } from '../utils/schedule'
 import { useActivityNotifications } from '../hooks/useActivityNotifications'
+import { useSessionTimerNotification } from '../hooks/useSessionTimerNotification'
 
 interface AppDataValue {
   profiles: PlanProfile[]
@@ -51,6 +54,7 @@ interface AppDataValue {
   setTheme: (theme: ThemePreference) => void
 
   getAllDayStates: () => DayState[]
+  getDayState: (date: string) => DayState
   refreshIfNewDay: () => void
 
   exportData: () => AppDataExport
@@ -58,6 +62,14 @@ interface AppDataValue {
 
   notificationsEnabled: boolean
   setNotificationsEnabled: (enabled: boolean) => void
+
+  setDocket: (activityId: string, tasks: DocketTask[]) => void
+  startSessionTask: (activityId: string, taskId: string) => void
+  pauseSessionTimer: () => void
+  resumeSessionTimer: () => void
+  extendSessionTask: (minutes: number) => void
+  completeSessionTask: (status: DocketTaskStatus) => void
+  endSessionEarly: () => void
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null)
@@ -272,6 +284,104 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const getAllDayStates = useCallback(() => planRepo.getAllDayStates(), [])
+  const getDayState = useCallback((date: string) => planRepo.getDayState(date), [])
+
+  const setDocket = useCallback(
+    (activityId: string, tasks: DocketTask[]) => {
+      persistToday({ ...today, dockets: { ...today.dockets, [activityId]: tasks } })
+    },
+    [today, persistToday],
+  )
+
+  const startSessionTask = useCallback(
+    (activityId: string, taskId: string) => {
+      const task = today.dockets?.[activityId]?.find((t) => t.id === taskId)
+      if (!task) return
+      const now = new Date()
+      const targetEndAt = new Date(now.getTime() + task.plannedMinutes * 60_000).toISOString()
+      persistToday({
+        ...today,
+        activeSessionTimer: { activityId, taskId, startedAt: now.toISOString(), targetEndAt },
+      })
+    },
+    [today, persistToday],
+  )
+
+  const pauseSessionTimer = useCallback(() => {
+    const timer = today.activeSessionTimer
+    if (!timer || timer.pausedRemainingMs !== undefined) return
+    const remainingMs = Math.max(0, new Date(timer.targetEndAt).getTime() - Date.now())
+    persistToday({ ...today, activeSessionTimer: { ...timer, pausedRemainingMs: remainingMs } })
+  }, [today, persistToday])
+
+  const resumeSessionTimer = useCallback(() => {
+    const timer = today.activeSessionTimer
+    if (!timer || timer.pausedRemainingMs === undefined) return
+    const targetEndAt = new Date(Date.now() + timer.pausedRemainingMs).toISOString()
+    const { pausedRemainingMs: _paused, ...rest } = timer
+    persistToday({ ...today, activeSessionTimer: { ...rest, targetEndAt } })
+  }, [today, persistToday])
+
+  const extendSessionTask = useCallback(
+    (minutes: number) => {
+      const timer = today.activeSessionTimer
+      if (!timer) return
+      const targetEndAt = new Date(Date.now() + minutes * 60_000).toISOString()
+      const { pausedRemainingMs: _paused, ...rest } = timer
+      persistToday({ ...today, activeSessionTimer: { ...rest, targetEndAt } })
+    },
+    [today, persistToday],
+  )
+
+  const completeSessionTask = useCallback(
+    (status: DocketTaskStatus) => {
+      const timer = today.activeSessionTimer
+      if (!timer) return
+      const tasks = today.dockets?.[timer.activityId] ?? []
+      const actualMinutes = Math.max(
+        0,
+        Math.round((Date.now() - new Date(timer.startedAt).getTime()) / 60_000),
+      )
+      const updatedTasks = tasks.map((t) =>
+        t.id === timer.taskId ? { ...t, status, actualMinutes } : t,
+      )
+      const currentIndex = tasks.findIndex((t) => t.id === timer.taskId)
+      const next = updatedTasks.slice(currentIndex + 1).find((t) => t.status === 'planned')
+      const dockets = { ...today.dockets, [timer.activityId]: updatedTasks }
+
+      if (next) {
+        const now = new Date()
+        const targetEndAt = new Date(now.getTime() + next.plannedMinutes * 60_000).toISOString()
+        persistToday({
+          ...today,
+          dockets,
+          activeSessionTimer: {
+            activityId: timer.activityId,
+            taskId: next.id,
+            startedAt: now.toISOString(),
+            targetEndAt,
+          },
+        })
+      } else {
+        const { activeSessionTimer: _timer, ...rest } = today
+        persistToday({ ...rest, dockets })
+      }
+    },
+    [today, persistToday],
+  )
+
+  const endSessionEarly = useCallback(() => {
+    const { activeSessionTimer: _timer, ...rest } = today
+    persistToday(rest)
+  }, [today, persistToday])
+
+  const activeSessionTaskTitle = useMemo(() => {
+    const timer = today.activeSessionTimer
+    if (!timer) return undefined
+    return today.dockets?.[timer.activityId]?.find((t) => t.id === timer.taskId)?.title
+  }, [today])
+
+  useSessionTimerNotification(today.activeSessionTimer, activeSessionTaskTitle, notificationsEnabled)
 
   const exportData = useCallback(() => planRepo.exportData(), [])
 
@@ -338,11 +448,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       theme,
       setTheme,
       getAllDayStates,
+      getDayState,
       refreshIfNewDay,
       exportData,
       importData,
       notificationsEnabled,
       setNotificationsEnabled,
+      setDocket,
+      startSessionTask,
+      pauseSessionTimer,
+      resumeSessionTimer,
+      extendSessionTask,
+      completeSessionTask,
+      endSessionEarly,
     }),
     [
       profiles,
@@ -367,11 +485,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       theme,
       setTheme,
       getAllDayStates,
+      getDayState,
       refreshIfNewDay,
       exportData,
       importData,
       notificationsEnabled,
       setNotificationsEnabled,
+      setDocket,
+      startSessionTask,
+      pauseSessionTimer,
+      resumeSessionTimer,
+      extendSessionTask,
+      completeSessionTask,
+      endSessionEarly,
     ],
   )
 

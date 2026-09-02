@@ -1,21 +1,33 @@
 import { useState } from 'react'
-import type { Activity, ActivityLog } from '../types'
+import type { Activity, ActivityLog, DocketTask } from '../types'
 import { RatingBar } from './RatingBar'
+import { formatDuration } from '../utils/time'
+
+const STATUS_LABEL: Record<DocketTask['status'], string> = {
+  done: '✓',
+  skipped: '⤫',
+  planned: '—',
+}
 
 export function LogForm({
   activity,
+  docket,
   onSave,
   onCancel,
 }: {
   activity: Activity
+  docket?: DocketTask[]
   onSave: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>) => void
   onCancel: () => void
 }) {
+  const isFocusSession = !!activity.isFocusSession
   const [completedAsPlanned, setCompletedAsPlanned] = useState(true)
   const [intendedMinutesSpent, setIntendedMinutesSpent] = useState(activity.durationMin)
   const [actualActivityTitle, setActualActivityTitle] = useState('')
   const [actualMinutesSpent, setActualMinutesSpent] = useState(activity.durationMin)
   const [rating, setRating] = useState<number | undefined>(undefined)
+  const [productivityScore, setProductivityScore] = useState<number | undefined>(undefined)
+  const [disciplineScore, setDisciplineScore] = useState<number | undefined>(undefined)
   const [notes, setNotes] = useState('')
 
   function handleSave() {
@@ -26,13 +38,38 @@ export function LogForm({
       intendedMinutesSpent,
       actualActivityTitle: completedAsPlanned ? undefined : actualActivityTitle || undefined,
       actualMinutesSpent,
-      rating,
+      rating: isFocusSession ? undefined : rating,
+      productivityScore: isFocusSession ? productivityScore : undefined,
+      disciplineScore: isFocusSession ? disciplineScore : undefined,
       notes: notes || undefined,
     })
   }
 
   return (
     <div className="space-y-5">
+      {isFocusSession && docket && docket.length > 0 && (
+        <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+          <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">Docket</p>
+          <ul className="space-y-1.5">
+            {docket.map((task) => (
+              <li
+                key={task.id}
+                className="flex items-center justify-between gap-2 text-sm text-slate-600 dark:text-slate-400"
+              >
+                <span className="min-w-0 truncate">
+                  {STATUS_LABEL[task.status]} {task.title}
+                </span>
+                <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                  {typeof task.actualMinutes === 'number'
+                    ? formatDuration(task.actualMinutes)
+                    : formatDuration(task.plannedMinutes) + ' planned'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <button
         type="button"
         onClick={() => setCompletedAsPlanned((v) => !v)}
@@ -104,12 +141,29 @@ export function LogForm({
         </>
       )}
 
-      <div>
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Honest rating — how do you feel about this block?
-        </span>
-        <RatingBar value={rating} onChange={setRating} />
-      </div>
+      {isFocusSession ? (
+        <>
+          <div>
+            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Productivity
+            </span>
+            <RatingBar min={1} max={10} value={productivityScore} onChange={setProductivityScore} />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Discipline
+            </span>
+            <RatingBar min={1} max={10} value={disciplineScore} onChange={setDisciplineScore} />
+          </div>
+        </>
+      ) : (
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Honest rating — how do you feel about this block?
+          </span>
+          <RatingBar value={rating} onChange={setRating} />
+        </div>
+      )}
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">

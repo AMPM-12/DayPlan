@@ -131,6 +131,7 @@ export function TodayScreen() {
         {loggingFor && (
           <LogForm
             activity={loggingFor.activity}
+            docket={today.dockets?.[loggingFor.activity.id]}
             onCancel={() => setLoggingFor(null)}
             onSave={(log) => {
               addLog(log, log.completedAsPlanned ? loggingFor.activity.id : undefined)

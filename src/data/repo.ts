@@ -17,6 +17,8 @@ const PROFILES_KEY = 'dailyplan.profiles.v1'
 const DAY_MAPPING_KEY = 'dailyplan.dayMapping.v1'
 const DEFAULT_PROFILE_ID_KEY = 'dailyplan.defaultProfileId.v1'
 const NOTIFICATIONS_ENABLED_KEY = 'dailyplan.notificationsEnabled.v1'
+const FOCUS_SESSION_MIGRATION_KEY = 'dailyplan.focusSessionMigration.v1'
+const LEGACY_FOCUS_SESSION_TITLE = 'Work — SOLID'
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
@@ -110,18 +112,40 @@ class LocalStoragePlanRepo implements PlanRepo {
   }
 
   getProfiles(): PlanProfile[] {
+    let profiles: PlanProfile[]
     const raw = localStorage.getItem(PROFILES_KEY)
-    if (raw) return safeParse<PlanProfile[]>(raw, [])
-
-    // First run after the profiles update: migrate the single legacy plan
-    // into a "Default" profile so no one loses their existing schedule.
-    const defaultId = uuid()
-    const profiles: PlanProfile[] = [{ id: defaultId, name: 'Default', activities: this.getPlan() }]
-    this.saveProfiles(profiles)
-    localStorage.setItem(DEFAULT_PROFILE_ID_KEY, defaultId)
-    if (!localStorage.getItem(DAY_MAPPING_KEY)) {
-      this.saveDayMapping(buildDayMapping(defaultId))
+    if (raw) {
+      profiles = safeParse<PlanProfile[]>(raw, [])
+    } else {
+      // First run after the profiles update: migrate the single legacy plan
+      // into a "Default" profile so no one loses their existing schedule.
+      const defaultId = uuid()
+      profiles = [{ id: defaultId, name: 'Default', activities: this.getPlan() }]
+      this.saveProfiles(profiles)
+      localStorage.setItem(DEFAULT_PROFILE_ID_KEY, defaultId)
+      if (!localStorage.getItem(DAY_MAPPING_KEY)) {
+        this.saveDayMapping(buildDayMapping(defaultId))
+      }
     }
+
+    // One-time backfill after the focus-sessions update: flag the existing
+    // "Work — SOLID" blocks so no one has to re-toggle them by hand.
+    if (!localStorage.getItem(FOCUS_SESSION_MIGRATION_KEY)) {
+      let changed = false
+      profiles = profiles.map((p) => ({
+        ...p,
+        activities: p.activities.map((a) => {
+          if (a.title === LEGACY_FOCUS_SESSION_TITLE && a.isFocusSession === undefined) {
+            changed = true
+            return { ...a, isFocusSession: true }
+          }
+          return a
+        }),
+      }))
+      if (changed) this.saveProfiles(profiles)
+      localStorage.setItem(FOCUS_SESSION_MIGRATION_KEY, 'done')
+    }
+
     return profiles
   }
 

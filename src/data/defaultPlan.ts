@@ -52,6 +52,7 @@ export function buildDefaultPlan(): Activity[] {
       durationMin: 120,
       category: 'work',
       notes: 'Pomodoro / Mastery Journal',
+      isFocusSession: true,
     },
     {
       id: uuid(),
@@ -66,6 +67,7 @@ export function buildDefaultPlan(): Activity[] {
       startTime: '11:30',
       durationMin: 120,
       category: 'work',
+      isFocusSession: true,
     },
     {
       id: uuid(),
@@ -80,6 +82,7 @@ export function buildDefaultPlan(): Activity[] {
       startTime: '14:00',
       durationMin: 120,
       category: 'work',
+      isFocusSession: true,
     },
     {
       id: uuid(),

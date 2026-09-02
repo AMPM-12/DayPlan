@@ -3,6 +3,7 @@ import { AppDataProvider, useAppData } from './data/AppDataContext'
 import { useThemeEffect } from './hooks/useThemeEffect'
 import { TodayScreen } from './screens/TodayScreen'
 import { EditPlanScreen } from './screens/EditPlanScreen'
+import { FocusSessionsScreen } from './screens/FocusSessionsScreen'
 import { ReportScreen } from './screens/ReportScreen'
 import { BottomNav } from './components/BottomNav'
 
@@ -15,6 +16,7 @@ function Shell() {
       <Routes>
         <Route path="/" element={<TodayScreen />} />
         <Route path="/plan" element={<EditPlanScreen />} />
+        <Route path="/focus" element={<FocusSessionsScreen />} />
         <Route path="/report" element={<ReportScreen />} />
       </Routes>
       <div className="no-print">

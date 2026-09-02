@@ -24,6 +24,7 @@ export function ActivityForm({
   const [isFlexible, setIsFlexible] = useState(initial?.isFlexible ?? false)
   const [flexOptions, setFlexOptions] = useState<FlexOption[]>(initial?.flexOptions ?? [])
   const [newOption, setNewOption] = useState('')
+  const [isFocusSession, setIsFocusSession] = useState(initial?.isFocusSession ?? false)
 
   const canSave = title.trim().length > 0 && durationMin > 0
 
@@ -38,6 +39,7 @@ export function ActivityForm({
       notes: notes || undefined,
       isFlexible,
       flexOptions: isFlexible ? flexOptions : undefined,
+      isFocusSession,
     })
   }
 
@@ -220,6 +222,30 @@ export function ActivityForm({
           </div>
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={() => setIsFocusSession((v) => !v)}
+        className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
+          isFocusSession
+            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
+            : 'border-slate-200 dark:border-slate-700'
+        }`}
+      >
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${
+            isFocusSession ? 'bg-indigo-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+          }`}
+        >
+          {isFocusSession ? '✓' : ''}
+        </span>
+        <div>
+          <p className="font-medium text-slate-900 dark:text-slate-100">Focus session</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Adds a task docket and Productivity/Discipline scores in Focus Sessions
+          </p>
+        </div>
+      </button>
 
       <div className="flex gap-3 pt-1">
         {onDelete && (
