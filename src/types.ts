@@ -76,3 +76,12 @@ export interface DayState {
 }
 
 export type ThemePreference = 'system' | 'light' | 'dark'
+
+export interface AppDataExport {
+  version: 1
+  exportedAt: string // ISO
+  profiles: PlanProfile[]
+  defaultProfileId: string
+  dayMapping: DayMapping
+  dayStates: DayState[]
+}

@@ -1,5 +1,13 @@
 import { v4 as uuid } from 'uuid'
-import type { Activity, DayMapping, DayState, PlanProfile, ThemePreference, Weekday } from '../types'
+import type {
+  Activity,
+  AppDataExport,
+  DayMapping,
+  DayState,
+  PlanProfile,
+  ThemePreference,
+  Weekday,
+} from '../types'
 import { buildDefaultPlan } from './defaultPlan'
 
 const PLAN_KEY = 'dailyplan.plan.v1'
@@ -33,8 +41,12 @@ export interface PlanRepo {
   getProfiles(): PlanProfile[]
   saveProfiles(profiles: PlanProfile[]): void
   getDefaultProfileId(): string
+  saveDefaultProfileId(id: string): void
   getDayMapping(): DayMapping
   saveDayMapping(mapping: DayMapping): void
+  clearAllDayStates(): void
+  exportData(): AppDataExport
+  importData(data: AppDataExport): void
 }
 
 function emptyDayState(date: string): DayState {
@@ -122,6 +134,10 @@ class LocalStoragePlanRepo implements PlanRepo {
     return localStorage.getItem(DEFAULT_PROFILE_ID_KEY) ?? profiles[0]?.id ?? uuid()
   }
 
+  saveDefaultProfileId(id: string): void {
+    localStorage.setItem(DEFAULT_PROFILE_ID_KEY, id)
+  }
+
   getDayMapping(): DayMapping {
     const raw = localStorage.getItem(DAY_MAPPING_KEY)
     return safeParse<DayMapping>(raw, buildDayMapping(this.getDefaultProfileId()))
@@ -129,6 +145,34 @@ class LocalStoragePlanRepo implements PlanRepo {
 
   saveDayMapping(mapping: DayMapping): void {
     localStorage.setItem(DAY_MAPPING_KEY, JSON.stringify(mapping))
+  }
+
+  clearAllDayStates(): void {
+    const keys: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(DAY_PREFIX)) keys.push(key)
+    }
+    keys.forEach((key) => localStorage.removeItem(key))
+  }
+
+  exportData(): AppDataExport {
+    return {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      profiles: this.getProfiles(),
+      defaultProfileId: this.getDefaultProfileId(),
+      dayMapping: this.getDayMapping(),
+      dayStates: this.getAllDayStates(),
+    }
+  }
+
+  importData(data: AppDataExport): void {
+    this.saveProfiles(data.profiles)
+    this.saveDefaultProfileId(data.defaultProfileId)
+    this.saveDayMapping(data.dayMapping)
+    this.clearAllDayStates()
+    data.dayStates.forEach((state) => this.saveDayState(state))
   }
 }
 

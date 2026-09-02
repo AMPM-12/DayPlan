@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAppData } from '../data/AppDataContext'
-import type { Activity, Weekday } from '../types'
-import { parseTimeToMinutes } from '../utils/time'
+import type { Activity, AppDataExport, Weekday } from '../types'
+import { parseTimeToMinutes, todayDateString } from '../utils/time'
 import { restackContiguously } from '../utils/reorderActivities'
+import { parseAppDataExport } from '../utils/backup'
 import { Sheet } from '../components/Sheet'
 import { ActivityForm } from '../components/ActivityForm'
 import { ActivityList } from '../components/ActivityList'
@@ -31,6 +32,8 @@ export function EditPlanScreen() {
     reorderActivities,
     dayMapping,
     setDayMapping,
+    exportData,
+    importData,
   } = useAppData()
 
   const [activeProfileId, setActiveProfileId] = useState(defaultProfileId)
@@ -42,6 +45,12 @@ export function EditPlanScreen() {
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [newProfileName, setNewProfileName] = useState('')
+
+  const [backupOpen, setBackupOpen] = useState(false)
+  const [pendingImport, setPendingImport] = useState<AppDataExport | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importDone, setImportDone] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const sorted = activeProfile
     ? [...activeProfile.activities].sort(
@@ -68,6 +77,52 @@ export function EditPlanScreen() {
 
   function handleReorder(ordered: Activity[]) {
     reorderActivities(activeProfileId, restackContiguously(ordered))
+  }
+
+  function closeBackup() {
+    setBackupOpen(false)
+    setPendingImport(null)
+    setImportError(null)
+    setImportDone(false)
+  }
+
+  function handleExport() {
+    const data = exportData()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `dayplan-backup-${todayDateString()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handlePickFile() {
+    setImportError(null)
+    setImportDone(false)
+    fileInputRef.current?.click()
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const text = await file.text()
+      setPendingImport(parseAppDataExport(text))
+      setImportError(null)
+    } catch (err) {
+      setPendingImport(null)
+      setImportError(err instanceof Error ? err.message : 'Could not read that file.')
+    }
+  }
+
+  function confirmImport() {
+    if (!pendingImport) return
+    importData(pendingImport)
+    setActiveProfileId(pendingImport.defaultProfileId)
+    setPendingImport(null)
+    setImportDone(true)
   }
 
   return (
@@ -111,13 +166,22 @@ export function EditPlanScreen() {
         </button>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setMappingOpen(true)}
-        className="mb-5 text-xs font-medium text-indigo-600 dark:text-indigo-400"
-      >
-        Which plan applies each day →
-      </button>
+      <div className="mb-5 flex flex-wrap gap-x-4 gap-y-1">
+        <button
+          type="button"
+          onClick={() => setMappingOpen(true)}
+          className="text-xs font-medium text-indigo-600 dark:text-indigo-400"
+        >
+          Which plan applies each day →
+        </button>
+        <button
+          type="button"
+          onClick={() => setBackupOpen(true)}
+          className="text-xs font-medium text-indigo-600 dark:text-indigo-400"
+        >
+          Backup & restore →
+        </button>
+      </div>
 
       {sorted.length === 0 ? (
         <div className="rounded-3xl bg-slate-100 p-6 text-center dark:bg-slate-800/60">
@@ -259,6 +323,88 @@ export function EditPlanScreen() {
               </select>
             </div>
           ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={backupOpen} onClose={closeBackup} title="Backup & restore">
+        <div className="space-y-5">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            onChange={handleFileSelected}
+            className="hidden"
+          />
+
+          {pendingImport ? (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                This will replace all profiles, the weekly schedule, and every day's history
+                (completions, overrides, and logs) with the contents of this file. This can't be
+                undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPendingImport(null)}
+                  className="flex-1 rounded-xl bg-slate-100 py-3 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmImport}
+                  className="flex-1 rounded-xl bg-red-600 py-3 font-semibold text-white"
+                >
+                  Overwrite everything
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div>
+                <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Export
+                </p>
+                <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+                  Download every profile, the weekly schedule, and all day history as one JSON
+                  file.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white"
+                >
+                  Export data
+                </button>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Import
+                </p>
+                <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+                  Restore from a previously exported file. You'll be asked to confirm before
+                  anything is overwritten.
+                </p>
+                <button
+                  type="button"
+                  onClick={handlePickFile}
+                  className="w-full rounded-xl bg-slate-100 py-3 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  Choose file…
+                </button>
+                {importError && (
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">{importError}</p>
+                )}
+                {importDone && (
+                  <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">
+                    Import complete.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </Sheet>
     </div>

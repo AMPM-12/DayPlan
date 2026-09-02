@@ -9,7 +9,16 @@ import {
 } from 'react'
 import { v4 as uuid } from 'uuid'
 import { planRepo } from './repo'
-import type { Activity, ActivityLog, DayMapping, DayState, PlanProfile, ThemePreference, Weekday } from '../types'
+import type {
+  Activity,
+  ActivityLog,
+  AppDataExport,
+  DayMapping,
+  DayState,
+  PlanProfile,
+  ThemePreference,
+  Weekday,
+} from '../types'
 import { addDays, nowMinutes, todayDateString } from '../utils/time'
 import { resolveActivities } from '../utils/profiles'
 
@@ -41,13 +50,16 @@ interface AppDataValue {
 
   getAllDayStates: () => DayState[]
   refreshIfNewDay: () => void
+
+  exportData: () => AppDataExport
+  importData: (data: AppDataExport) => void
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null)
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [profiles, setProfilesState] = useState<PlanProfile[]>(() => planRepo.getProfiles())
-  const [defaultProfileId] = useState<string>(() => planRepo.getDefaultProfileId())
+  const [defaultProfileId, setDefaultProfileId] = useState<string>(() => planRepo.getDefaultProfileId())
   const [dayMapping, setDayMappingState] = useState<DayMapping>(() => planRepo.getDayMapping())
   const [today, setToday] = useState<DayState>(() => planRepo.getDayState(todayDateString()))
   const [theme, setThemeState] = useState<ThemePreference>(() => planRepo.getTheme())
@@ -239,6 +251,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const getAllDayStates = useCallback(() => planRepo.getAllDayStates(), [])
 
+  const exportData = useCallback(() => planRepo.exportData(), [])
+
+  const importData = useCallback((data: AppDataExport) => {
+    planRepo.importData(data)
+    setProfilesState(planRepo.getProfiles())
+    setDefaultProfileId(planRepo.getDefaultProfileId())
+    setDayMappingState(planRepo.getDayMapping())
+    setToday(planRepo.getDayState(todayDateString()))
+  }, [])
+
   // A date is "locked in" the first time it's no longer today, using whatever
   // activities were in effect for it — so later profile/mapping edits can't
   // retroactively change a day that already happened.
@@ -295,6 +317,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setTheme,
       getAllDayStates,
       refreshIfNewDay,
+      exportData,
+      importData,
     }),
     [
       profiles,
@@ -320,6 +344,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setTheme,
       getAllDayStates,
       refreshIfNewDay,
+      exportData,
+      importData,
     ],
   )
 
