@@ -13,10 +13,11 @@ export interface ScheduleItem {
 }
 
 /**
- * Builds today's ordered schedule. When a "start this now" override is
- * active, the overridden activity and everything after it (in plan order)
- * shift forward/back to flow from the override's actual start time —
- * activities before it keep their original planned times untouched.
+ * Builds today's ordered schedule. Every activity keeps its own planned
+ * start/end time — nothing shifts. When a "start this now" override is
+ * active, only the overridden activity's start/end move to reflect its
+ * actual start, and it is forced to show as the current activity
+ * regardless of what the clock would otherwise pick.
  */
 export function computeSchedule(
   activities: Activity[],
@@ -28,30 +29,28 @@ export function computeSchedule(
     (a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime),
   )
 
-  const overrideIndex = override ? sorted.findIndex((a) => a.id === override.activityId) : -1
-
-  let cursor = overrideIndex >= 0 ? override!.actualStartMinutes : 0
-
-  return sorted.map((activity, i) => {
+  return sorted.map((activity) => {
     const planned = parseTimeToMinutes(activity.startTime)
-    let start: number
-    let isShifted = false
-
-    if (overrideIndex >= 0 && i >= overrideIndex) {
-      start = cursor
-      cursor = start + activity.durationMin
-      isShifted = start !== planned
-    } else {
-      start = planned
-    }
-
+    const isOverridden = override?.activityId === activity.id
+    const start = isOverridden ? override!.actualStartMinutes : planned
     const end = start + activity.durationMin
     const completed = completedIds.includes(activity.id)
-    let status: ItemStatus = 'future'
-    if (nowMins >= end) status = 'past'
-    else if (nowMins >= start) status = 'current'
 
-    return { activity, start, end, status, completed, isShifted }
+    let status: ItemStatus
+    if (isOverridden) {
+      status = 'current'
+    } else if (override) {
+      // A different activity is overriding NOW, so the clock-based pick is suppressed here.
+      status = nowMins >= end ? 'past' : 'future'
+    } else if (nowMins >= end) {
+      status = 'past'
+    } else if (nowMins >= start) {
+      status = 'current'
+    } else {
+      status = 'future'
+    }
+
+    return { activity, start, end, status, completed, isShifted: isOverridden && start !== planned }
   })
 }
 

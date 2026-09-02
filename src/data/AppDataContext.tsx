@@ -93,7 +93,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
       }
       const logs = [...today.logs.filter((l) => l.activityId !== activityId), autoLog]
-      persistToday({ ...today, completedIds, logs })
+      const override = today.override?.activityId === activityId ? undefined : today.override
+      persistToday({ ...today, completedIds, logs, override })
     },
     [today, persistToday],
   )
