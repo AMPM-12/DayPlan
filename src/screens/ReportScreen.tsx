@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useAppData } from '../data/AppDataContext'
 import type { ActivityLog } from '../types'
 import { formatDuration, todayDateString } from '../utils/time'
+import { toCsv } from '../utils/csv'
 
 type RangePreset = '7' | '30' | 'month' | 'custom'
 
@@ -53,6 +54,35 @@ export function ReportScreen() {
     return { total: logs.length, onPlan, avgRating, intended, actualDrift }
   }, [logs])
 
+  function handleExportCsv() {
+    const header = [
+      'Date',
+      'Activity',
+      'Intended Minutes',
+      'Actual Minutes',
+      'Rating',
+      'Notes',
+      'Completed As Planned',
+    ]
+    const rows = logs.map((l) => [
+      l.date,
+      l.activityTitle,
+      l.intendedMinutesSpent,
+      l.actualMinutesSpent,
+      l.rating,
+      l.notes,
+      l.completedAsPlanned ? 'Yes' : 'No',
+    ])
+    const csv = toCsv([header, ...rows])
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `dayplan-report-${start}-to-${end}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
       <header className="mb-5 flex items-center justify-between no-print">
@@ -61,15 +91,26 @@ export function ReportScreen() {
           <p className="text-sm text-slate-400 dark:text-slate-500">How you actually spent your time</p>
         </div>
         {logs.length > 0 && (
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-base dark:bg-slate-800"
-            aria-label="Print report"
-            title="Print"
-          >
-            🖨️
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-base dark:bg-slate-800"
+              aria-label="Export CSV"
+              title="Export CSV"
+            >
+              ⬇️
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-base dark:bg-slate-800"
+              aria-label="Print report"
+              title="Print"
+            >
+              🖨️
+            </button>
+          </div>
         )}
       </header>
 
