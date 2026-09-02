@@ -29,6 +29,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        // Adds a `push` (and `notificationclick`) listener to the generated
+        // service worker without switching away from generateSW — see
+        // public/push-handler.js.
+        importScripts: ['push-handler.js'],
       },
     }),
   ],

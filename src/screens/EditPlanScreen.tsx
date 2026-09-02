@@ -9,6 +9,7 @@ import {
   isNotificationSupported,
   requestNotificationPermission,
 } from '../utils/notifications'
+import { disablePush } from '../utils/push'
 import { Sheet } from '../components/Sheet'
 import { ActivityForm } from '../components/ActivityForm'
 import { ActivityList } from '../components/ActivityList'
@@ -143,6 +144,7 @@ export function EditPlanScreen() {
     if (notificationsEnabled) {
       setNotificationsEnabled(false)
       setNotifMessage(null)
+      void disablePush()
       return
     }
 

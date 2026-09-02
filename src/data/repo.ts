@@ -17,6 +17,7 @@ const PROFILES_KEY = 'dailyplan.profiles.v1'
 const DAY_MAPPING_KEY = 'dailyplan.dayMapping.v1'
 const DEFAULT_PROFILE_ID_KEY = 'dailyplan.defaultProfileId.v1'
 const NOTIFICATIONS_ENABLED_KEY = 'dailyplan.notificationsEnabled.v1'
+const DEVICE_ID_KEY = 'dailyplan.deviceId.v1'
 const FOCUS_SESSION_MIGRATION_KEY = 'dailyplan.focusSessionMigration.v1'
 const LEGACY_FOCUS_SESSION_TITLE = 'Work — SOLID'
 
@@ -52,6 +53,7 @@ export interface PlanRepo {
   importData(data: AppDataExport): void
   getNotificationsEnabled(): boolean
   saveNotificationsEnabled(enabled: boolean): void
+  getDeviceId(): string
 }
 
 function emptyDayState(date: string): DayState {
@@ -208,6 +210,15 @@ class LocalStoragePlanRepo implements PlanRepo {
 
   saveNotificationsEnabled(enabled: boolean): void {
     localStorage.setItem(NOTIFICATIONS_ENABLED_KEY, String(enabled))
+  }
+
+  getDeviceId(): string {
+    let id = localStorage.getItem(DEVICE_ID_KEY)
+    if (!id) {
+      id = uuid()
+      localStorage.setItem(DEVICE_ID_KEY, id)
+    }
+    return id
   }
 }
 

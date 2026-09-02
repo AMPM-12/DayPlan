@@ -26,6 +26,7 @@ import { resolveActivities } from '../utils/profiles'
 import { computeSchedule } from '../utils/schedule'
 import { useActivityNotifications } from '../hooks/useActivityNotifications'
 import { useSessionTimerNotification } from '../hooks/useSessionTimerNotification'
+import { usePushTransitionsSync } from '../hooks/usePushTransitionsSync'
 
 interface AppDataValue {
   profiles: PlanProfile[]
@@ -205,6 +206,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [todayActivities, today.completedIds, today.override],
   )
   useActivityNotifications(notificationItems, notificationsEnabled)
+
+  // Tomorrow's date has no per-date override/snapshot until it actually
+  // becomes "today", so live resolution (no DayState) is always correct here.
+  const tomorrowDate = useMemo(() => addDays(today.date, 1), [today.date])
+  const tomorrowActivities = useMemo(
+    () => resolveActivities(tomorrowDate, undefined, profiles, dayMapping, defaultProfileId),
+    [tomorrowDate, profiles, dayMapping, defaultProfileId],
+  )
+  usePushTransitionsSync(
+    notificationsEnabled,
+    today.date,
+    notificationItems,
+    tomorrowDate,
+    tomorrowActivities,
+  )
 
   const setTodayProfileOverride = useCallback(
     (profileId: string | undefined) => {

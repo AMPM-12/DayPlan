@@ -62,3 +62,9 @@ export function addDays(dateStr: string, delta: number): string {
   d.setDate(d.getDate() + delta)
   return todayDateString(d)
 }
+
+/** A real Date for `dateStr`'s local midnight plus `minutesSinceMidnight`. */
+export function dateStringPlusMinutes(dateStr: string, minutesSinceMidnight: number): Date {
+  const midnight = new Date(`${dateStr}T00:00:00`)
+  return new Date(midnight.getTime() + minutesSinceMidnight * 60_000)
+}
