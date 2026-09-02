@@ -1,17 +1,35 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import { v4 as uuid } from 'uuid'
 import { planRepo } from './repo'
-import type { Activity, ActivityLog, DayState, ThemePreference } from '../types'
-import { nowMinutes, todayDateString } from '../utils/time'
+import type { Activity, ActivityLog, DayMapping, DayState, PlanProfile, ThemePreference, Weekday } from '../types'
+import { addDays, nowMinutes, todayDateString } from '../utils/time'
+import { resolveActivities } from '../utils/profiles'
 
 interface AppDataValue {
-  plan: Activity[]
-  setPlan: (activities: Activity[]) => void
-  addActivity: (activity: Activity) => void
-  updateActivity: (activity: Activity) => void
-  deleteActivity: (id: string) => void
+  profiles: PlanProfile[]
+  defaultProfileId: string
+  addProfile: (name: string) => PlanProfile
+  renameProfile: (id: string, name: string) => void
+  duplicateProfile: (id: string) => void
+  deleteProfile: (id: string) => void
+  addActivity: (profileId: string, activity: Activity) => void
+  updateActivity: (profileId: string, activity: Activity) => void
+  deleteActivity: (profileId: string, activityId: string) => void
+
+  dayMapping: DayMapping
+  setDayMapping: (day: Weekday, profileId: string) => void
 
   today: DayState
+  todayActivities: Activity[]
+  setTodayProfileOverride: (profileId: string | undefined) => void
   toggleComplete: (activity: Activity) => void
   startNow: (activityId: string) => void
   resetOverride: () => void
@@ -20,7 +38,6 @@ interface AppDataValue {
   theme: ThemePreference
   setTheme: (theme: ThemePreference) => void
 
-  getDayState: (date: string) => DayState
   getAllDayStates: () => DayState[]
   refreshIfNewDay: () => void
 }
@@ -28,46 +45,119 @@ interface AppDataValue {
 const AppDataContext = createContext<AppDataValue | null>(null)
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [plan, setPlanState] = useState<Activity[]>(() => planRepo.getPlan())
+  const [profiles, setProfilesState] = useState<PlanProfile[]>(() => planRepo.getProfiles())
+  const [defaultProfileId] = useState<string>(() => planRepo.getDefaultProfileId())
+  const [dayMapping, setDayMappingState] = useState<DayMapping>(() => planRepo.getDayMapping())
   const [today, setToday] = useState<DayState>(() => planRepo.getDayState(todayDateString()))
   const [theme, setThemeState] = useState<ThemePreference>(() => planRepo.getTheme())
 
-  const setPlan = useCallback((activities: Activity[]) => {
-    planRepo.savePlan(activities)
-    setPlanState(activities)
+  const persistProfiles = useCallback((next: PlanProfile[]) => {
+    planRepo.saveProfiles(next)
+    setProfilesState(next)
   }, [])
 
-  const addActivity = useCallback(
-    (activity: Activity) => {
-      const next = [...plan, activity]
-      planRepo.savePlan(next)
-      setPlanState(next)
+  const addProfile = useCallback(
+    (name: string) => {
+      const profile: PlanProfile = { id: uuid(), name, activities: [] }
+      persistProfiles([...profiles, profile])
+      return profile
     },
-    [plan],
+    [profiles, persistProfiles],
+  )
+
+  const renameProfile = useCallback(
+    (id: string, name: string) => {
+      persistProfiles(profiles.map((p) => (p.id === id ? { ...p, name } : p)))
+    },
+    [profiles, persistProfiles],
+  )
+
+  const duplicateProfile = useCallback(
+    (id: string) => {
+      const source = profiles.find((p) => p.id === id)
+      if (!source) return
+      const copy: PlanProfile = {
+        id: uuid(),
+        name: `${source.name} copy`,
+        activities: source.activities.map((a) => ({ ...a, id: uuid() })),
+      }
+      persistProfiles([...profiles, copy])
+    },
+    [profiles, persistProfiles],
+  )
+
+  const deleteProfile = useCallback(
+    (id: string) => {
+      // The default profile is the ultimate fallback and can't be removed;
+      // there must always be at least one profile.
+      if (id === defaultProfileId || profiles.length <= 1) return
+      persistProfiles(profiles.filter((p) => p.id !== id))
+    },
+    [profiles, persistProfiles, defaultProfileId],
+  )
+
+  const addActivity = useCallback(
+    (profileId: string, activity: Activity) => {
+      persistProfiles(
+        profiles.map((p) =>
+          p.id === profileId ? { ...p, activities: [...p.activities, activity] } : p,
+        ),
+      )
+    },
+    [profiles, persistProfiles],
   )
 
   const updateActivity = useCallback(
-    (activity: Activity) => {
-      const next = plan.map((a) => (a.id === activity.id ? activity : a))
-      planRepo.savePlan(next)
-      setPlanState(next)
+    (profileId: string, activity: Activity) => {
+      persistProfiles(
+        profiles.map((p) =>
+          p.id === profileId
+            ? { ...p, activities: p.activities.map((a) => (a.id === activity.id ? activity : a)) }
+            : p,
+        ),
+      )
     },
-    [plan],
+    [profiles, persistProfiles],
   )
 
   const deleteActivity = useCallback(
-    (id: string) => {
-      const next = plan.filter((a) => a.id !== id)
-      planRepo.savePlan(next)
-      setPlanState(next)
+    (profileId: string, activityId: string) => {
+      persistProfiles(
+        profiles.map((p) =>
+          p.id === profileId
+            ? { ...p, activities: p.activities.filter((a) => a.id !== activityId) }
+            : p,
+        ),
+      )
     },
-    [plan],
+    [profiles, persistProfiles],
+  )
+
+  const setDayMapping = useCallback(
+    (day: Weekday, profileId: string) => {
+      const next = { ...dayMapping, [day]: profileId }
+      planRepo.saveDayMapping(next)
+      setDayMappingState(next)
+    },
+    [dayMapping],
   )
 
   const persistToday = useCallback((state: DayState) => {
     planRepo.saveDayState(state)
     setToday(state)
   }, [])
+
+  const todayActivities = useMemo(
+    () => resolveActivities(today.date, today, profiles, dayMapping, defaultProfileId),
+    [today, profiles, dayMapping, defaultProfileId],
+  )
+
+  const setTodayProfileOverride = useCallback(
+    (profileId: string | undefined) => {
+      persistToday({ ...today, profileOverride: profileId, override: undefined })
+    },
+    [today, persistToday],
+  )
 
   const toggleComplete = useCallback(
     (activity: Activity) => {
@@ -139,46 +229,85 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setThemeState(t)
   }, [])
 
-  const getDayState = useCallback((date: string) => planRepo.getDayState(date), [])
   const getAllDayStates = useCallback(() => planRepo.getAllDayStates(), [])
+
+  // A date is "locked in" the first time it's no longer today, using whatever
+  // activities were in effect for it — so later profile/mapping edits can't
+  // retroactively change a day that already happened.
+  const lockInIfPast = useCallback(
+    (date: string, state: DayState) => {
+      if (date >= todayDateString() || state.activitiesSnapshot) return
+      const hasActivity =
+        state.completedIds.length > 0 || state.logs.length > 0 || !!state.override || !!state.profileOverride
+      if (!hasActivity) return
+      const activities = resolveActivities(date, state, profiles, dayMapping, defaultProfileId)
+      planRepo.saveDayState({ ...state, activitiesSnapshot: activities })
+    },
+    [profiles, dayMapping, defaultProfileId],
+  )
+
+  // Covers the common case of the app being closed overnight and reopened
+  // the next day, so yesterday still gets locked in even though it was never
+  // seen going stale inside a live session.
+  useEffect(() => {
+    const yesterday = addDays(todayDateString(), -1)
+    lockInIfPast(yesterday, planRepo.getDayState(yesterday))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const refreshIfNewDay = useCallback(() => {
     const d = todayDateString()
-    if (d !== today.date) setToday(planRepo.getDayState(d))
-  }, [today.date])
+    if (d === today.date) return
+    lockInIfPast(today.date, today)
+    setToday(planRepo.getDayState(d))
+  }, [today, lockInIfPast])
 
   const value = useMemo<AppDataValue>(
     () => ({
-      plan,
-      setPlan,
+      profiles,
+      defaultProfileId,
+      addProfile,
+      renameProfile,
+      duplicateProfile,
+      deleteProfile,
       addActivity,
       updateActivity,
       deleteActivity,
+      dayMapping,
+      setDayMapping,
       today,
+      todayActivities,
+      setTodayProfileOverride,
       toggleComplete,
       startNow,
       resetOverride,
       addLog,
       theme,
       setTheme,
-      getDayState,
       getAllDayStates,
       refreshIfNewDay,
     }),
     [
-      plan,
-      setPlan,
+      profiles,
+      defaultProfileId,
+      addProfile,
+      renameProfile,
+      duplicateProfile,
+      deleteProfile,
       addActivity,
       updateActivity,
       deleteActivity,
+      dayMapping,
+      setDayMapping,
       today,
+      todayActivities,
+      setTodayProfileOverride,
       toggleComplete,
       startNow,
       resetOverride,
       addLog,
       theme,
       setTheme,
-      getDayState,
       getAllDayStates,
       refreshIfNewDay,
     ],

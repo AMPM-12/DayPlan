@@ -1,3 +1,5 @@
+import type { Weekday } from '../types'
+
 /** All "minutes" values below are minutes since local midnight. */
 
 export function parseTimeToMinutes(hhmm: string): number {
@@ -46,4 +48,17 @@ export function formatDuration(mins: number): string {
 export function formatDateHeading(dateStr: string): string {
   const d = new Date(`${dateStr}T00:00:00`)
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+}
+
+const WEEKDAYS_BY_JS_DAY: Weekday[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+
+export function weekdayOf(dateStr: string): Weekday {
+  const d = new Date(`${dateStr}T00:00:00`)
+  return WEEKDAYS_BY_JS_DAY[d.getDay()]
+}
+
+export function addDays(dateStr: string, delta: number): string {
+  const d = new Date(`${dateStr}T00:00:00`)
+  d.setDate(d.getDate() + delta)
+  return todayDateString(d)
 }

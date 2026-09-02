@@ -51,11 +51,28 @@ export interface StartOverride {
   actualStartMinutes: number
 }
 
+export interface PlanProfile {
+  id: string
+  name: string
+  activities: Activity[]
+}
+
+export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+
+export type DayMapping = Record<Weekday, string>
+
 export interface DayState {
   date: string // YYYY-MM-DD
   completedIds: string[]
   override?: StartOverride
   logs: ActivityLog[]
+  /** Per-date profile choice, overriding the day-of-week mapping for this date only. */
+  profileOverride?: string
+  /**
+   * The activities actually used on this date, locked in once the date is no longer
+   * "today" so later profile/mapping edits can't retroactively change history.
+   */
+  activitiesSnapshot?: Activity[]
 }
 
 export type ThemePreference = 'system' | 'light' | 'dark'
