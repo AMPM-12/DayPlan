@@ -12,23 +12,32 @@ const STATUS_LABEL: Record<DocketTask['status'], string> = {
 export function LogForm({
   activity,
   docket,
+  initial,
   onSave,
   onCancel,
 }: {
   activity: Activity
   docket?: DocketTask[]
+  /** An existing log to pre-fill from, when reopening one for editing. */
+  initial?: ActivityLog
   onSave: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>) => void
   onCancel: () => void
 }) {
   const isFocusSession = !!activity.isFocusSession
-  const [completedAsPlanned, setCompletedAsPlanned] = useState(true)
-  const [intendedMinutesSpent, setIntendedMinutesSpent] = useState(activity.durationMin)
-  const [actualActivityTitle, setActualActivityTitle] = useState('')
-  const [actualMinutesSpent, setActualMinutesSpent] = useState(activity.durationMin)
-  const [rating, setRating] = useState<number | undefined>(undefined)
-  const [productivityScore, setProductivityScore] = useState<number | undefined>(undefined)
-  const [disciplineScore, setDisciplineScore] = useState<number | undefined>(undefined)
-  const [notes, setNotes] = useState('')
+  const [completedAsPlanned, setCompletedAsPlanned] = useState(initial?.completedAsPlanned ?? true)
+  const [intendedMinutesSpent, setIntendedMinutesSpent] = useState(
+    initial?.intendedMinutesSpent ?? activity.durationMin,
+  )
+  const [actualActivityTitle, setActualActivityTitle] = useState(initial?.actualActivityTitle ?? '')
+  const [actualMinutesSpent, setActualMinutesSpent] = useState(
+    initial?.actualMinutesSpent ?? activity.durationMin,
+  )
+  const [rating, setRating] = useState<number | undefined>(initial?.rating)
+  const [productivityScore, setProductivityScore] = useState<number | undefined>(
+    initial?.productivityScore,
+  )
+  const [disciplineScore, setDisciplineScore] = useState<number | undefined>(initial?.disciplineScore)
+  const [notes, setNotes] = useState(initial?.notes ?? '')
 
   function handleSave() {
     onSave({
@@ -190,7 +199,7 @@ export function LogForm({
           onClick={handleSave}
           className="flex-1 rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
         >
-          Save log
+          {initial ? 'Save changes' : 'Save log'}
         </button>
       </div>
     </div>

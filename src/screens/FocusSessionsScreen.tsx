@@ -21,6 +21,7 @@ export function FocusSessionsScreen() {
     completeSessionTask,
     endSessionEarly,
     addLog,
+    updateLog,
   } = useAppData()
   const now = useNow()
   const [viewedDate, setViewedDate] = useState(todayDateString())
@@ -122,6 +123,10 @@ export function FocusSessionsScreen() {
               onCompleteTask={completeSessionTask}
               onEndEarly={endSessionEarly}
               onSaveLog={(log) => addLog(log, log.completedAsPlanned ? activity.id : undefined)}
+              onUpdateLog={(log) => {
+                updateLog(viewedDate, log)
+                if (!isToday) forceRefresh((t) => t + 1)
+              }}
             />
           ))}
         </div>

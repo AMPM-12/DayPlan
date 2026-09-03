@@ -36,6 +36,7 @@ export function SessionCard({
   onCompleteTask,
   onEndEarly,
   onSaveLog,
+  onUpdateLog,
 }: {
   activity: Activity
   /** This day's 1-based position among its focus sessions, e.g. 1, 2, 3… however many exist. */
@@ -57,6 +58,8 @@ export function SessionCard({
   onCompleteTask: (status: DocketTaskStatus) => void
   onEndEarly: () => void
   onSaveLog: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>) => void
+  /** Overwrites an already-saved log in place — used instead of onSaveLog when `log` is set. */
+  onUpdateLog: (log: ActivityLog) => void
 }) {
   const [loggingOpen, setLoggingOpen] = useState(false)
   const [editUpcomingOpen, setEditUpcomingOpen] = useState(false)
@@ -263,13 +266,22 @@ export function SessionCard({
         </div>
       )}
 
-      <Sheet open={loggingOpen} onClose={() => setLoggingOpen(false)} title="Log this session">
+      <Sheet
+        open={loggingOpen}
+        onClose={() => setLoggingOpen(false)}
+        title={log ? 'Edit log' : 'Log this session'}
+      >
         <LogForm
           activity={activity}
           docket={docket}
+          initial={log}
           onCancel={() => setLoggingOpen(false)}
           onSave={(logPayload) => {
-            onSaveLog(logPayload)
+            if (log) {
+              onUpdateLog({ ...log, ...logPayload })
+            } else {
+              onSaveLog(logPayload)
+            }
             setLoggingOpen(false)
           }}
         />

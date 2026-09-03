@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useAppData } from '../data/AppDataContext'
-import type { ActivityLog } from '../types'
+import type { Activity, ActivityLog } from '../types'
 import { formatDuration, todayDateString } from '../utils/time'
 import { toCsv } from '../utils/csv'
+import { Sheet } from '../components/Sheet'
+import { LogForm } from '../components/LogForm'
 
 type RangePreset = '7' | '30' | 'month' | 'custom'
 
@@ -19,10 +21,15 @@ function startOfMonth(): string {
 }
 
 export function ReportScreen() {
-  const { getAllDayStates } = useAppData()
+  const { getAllDayStates, getDayState, profiles, updateLog } = useAppData()
   const [preset, setPreset] = useState<RangePreset>('7')
   const [customStart, setCustomStart] = useState(daysAgo(7))
   const [customEnd, setCustomEnd] = useState(todayDateString())
+  const [editingLog, setEditingLog] = useState<ActivityLog | null>(null)
+  // Editing a log writes straight to storage rather than through React
+  // state (true for every date, since logs live inside per-date DayStates
+  // that this screen reads directly), so bump this to force a re-read.
+  const [refreshTick, setRefreshTick] = useState(0)
 
   const { start, end } = useMemo(() => {
     if (preset === '7') return { start: daysAgo(6), end: todayDateString() }
@@ -36,7 +43,29 @@ export function ReportScreen() {
     return states
       .flatMap((s) => s.logs)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-  }, [getAllDayStates, start, end])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getAllDayStates, start, end, refreshTick])
+
+  const editingActivity: Activity | null = useMemo(() => {
+    if (!editingLog) return null
+    const found = profiles.flatMap((p) => p.activities).find((a) => a.id === editingLog.activityId)
+    if (found) return found
+    // The activity was since deleted — reconstruct a minimal stand-in so the
+    // form still has something to render against.
+    return {
+      id: editingLog.activityId,
+      title: editingLog.activityTitle,
+      startTime: '00:00',
+      durationMin: editingLog.intendedMinutesSpent ?? 0,
+      isFocusSession:
+        editingLog.productivityScore !== undefined || editingLog.disciplineScore !== undefined,
+    }
+  }, [editingLog, profiles])
+
+  const editingDocket = useMemo(
+    () => (editingLog ? (getDayState(editingLog.date).dockets?.[editingLog.activityId] ?? []) : []),
+    [editingLog, getDayState],
+  )
 
   const summary = useMemo(() => {
     if (logs.length === 0) return null
@@ -194,9 +223,11 @@ export function ReportScreen() {
               .slice()
               .reverse()
               .map((log) => (
-                <div
+                <button
                   key={log.id}
-                  className="rounded-2xl bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
+                  type="button"
+                  onClick={() => setEditingLog(log)}
+                  className="w-full rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -231,11 +262,28 @@ export function ReportScreen() {
                   {log.notes && (
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{log.notes}</p>
                   )}
-                </div>
+                </button>
               ))}
           </div>
         </>
       )}
+
+      <Sheet open={!!editingLog} onClose={() => setEditingLog(null)} title="Edit log">
+        {editingLog && editingActivity && (
+          <LogForm
+            activity={editingActivity}
+            docket={editingDocket}
+            initial={editingLog}
+            onCancel={() => setEditingLog(null)}
+            onSave={(payload) => {
+              const date = editingLog.date
+              updateLog(date, { ...editingLog, ...payload })
+              setEditingLog(null)
+              setRefreshTick((t) => t + 1)
+            }}
+          />
+        )}
+      </Sheet>
     </div>
   )
 }

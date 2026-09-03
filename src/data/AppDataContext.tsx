@@ -50,6 +50,7 @@ interface AppDataValue {
   startNow: (activityId: string) => void
   resetOverride: () => void
   addLog: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>, alsoMarkComplete?: string) => void
+  updateLog: (date: string, log: ActivityLog) => void
 
   theme: ThemePreference
   setTheme: (theme: ThemePreference) => void
@@ -294,6 +295,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [today, persistToday],
   )
 
+  // Updates an already-saved log in place (by id) on its own date — unlike
+  // addLog this never creates a new entry or reassigns which date/block it
+  // belongs to, and works for any date, not just today.
+  const updateLog = useCallback(
+    (date: string, log: ActivityLog) => {
+      if (date === today.date) {
+        const logs = today.logs.map((l) => (l.id === log.id ? log : l))
+        persistToday({ ...today, logs })
+        return
+      }
+      const state = planRepo.getDayState(date)
+      const logs = state.logs.map((l) => (l.id === log.id ? log : l))
+      planRepo.saveDayState({ ...state, logs })
+    },
+    [today, persistToday],
+  )
+
   const setTheme = useCallback((t: ThemePreference) => {
     planRepo.saveTheme(t)
     setThemeState(t)
@@ -475,6 +493,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       startNow,
       resetOverride,
       addLog,
+      updateLog,
       theme,
       setTheme,
       getAllDayStates,
@@ -512,6 +531,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       startNow,
       resetOverride,
       addLog,
+      updateLog,
       theme,
       setTheme,
       getAllDayStates,
