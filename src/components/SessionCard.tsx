@@ -24,7 +24,8 @@ export function SessionCard({
   docket,
   log,
   now,
-  interactive,
+  canEditDocket,
+  canRun,
   activeTimer,
   anotherSessionActive,
   onSetDocket,
@@ -42,7 +43,10 @@ export function SessionCard({
   docket: DocketTask[]
   log: ActivityLog | undefined
   now: Date
-  interactive: boolean
+  /** Today or any future date: add/edit/reorder/delete the docket ahead of time. */
+  canEditDocket: boolean
+  /** Today only: start/pause/resume/complete tasks and log the session. */
+  canRun: boolean
   activeTimer: SessionTimerState | undefined
   anotherSessionActive: boolean
   onSetDocket: (tasks: DocketTask[]) => void
@@ -55,9 +59,11 @@ export function SessionCard({
   onSaveLog: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>) => void
 }) {
   const [loggingOpen, setLoggingOpen] = useState(false)
+  const [editUpcomingOpen, setEditUpcomingOpen] = useState(false)
 
-  const isActiveHere = interactive && activeTimer?.activityId === activity.id
-  const activeTask = isActiveHere ? docket.find((t) => t.id === activeTimer!.taskId) : undefined
+  const isActiveHere = canRun && activeTimer?.activityId === activity.id
+  const activeTaskIndex = isActiveHere ? docket.findIndex((t) => t.id === activeTimer!.taskId) : -1
+  const activeTask = activeTaskIndex >= 0 ? docket[activeTaskIndex] : undefined
   const isPaused = isActiveHere && activeTimer!.pausedRemainingMs !== undefined
   const remainingMs = isActiveHere
     ? isPaused
@@ -65,6 +71,16 @@ export function SessionCard({
       : Math.max(0, new Date(activeTimer!.targetEndAt).getTime() - now.getTime())
     : 0
   const isElapsed = isActiveHere && !isPaused && remainingMs <= 0
+
+  // Only the tasks after the one currently being timed are safe to edit —
+  // everything up to and including it (done/skipped, or actively running)
+  // is left untouched.
+  const upcomingTasks = activeTaskIndex >= 0 ? docket.slice(activeTaskIndex + 1) : []
+
+  function handleEditUpcoming(newUpcoming: DocketTask[]) {
+    const prefix = activeTaskIndex >= 0 ? docket.slice(0, activeTaskIndex + 1) : docket
+    onSetDocket([...prefix, ...newUpcoming])
+  }
 
   const hasStarted = docket.some((t) => t.status !== 'planned') || isActiveHere
   const nextPlanned = docket.find((t) => t.status === 'planned')
@@ -135,6 +151,14 @@ export function SessionCard({
               Skip
             </button>
           </div>
+          <DocketList docket={docket} />
+          <button
+            type="button"
+            onClick={() => setEditUpcomingOpen(true)}
+            className="w-full rounded-xl py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+          >
+            Edit upcoming tasks
+          </button>
         </div>
       ) : isActiveHere ? (
         <div className="space-y-4">
@@ -162,11 +186,18 @@ export function SessionCard({
             End session early
           </button>
           <DocketList docket={docket} />
+          <button
+            type="button"
+            onClick={() => setEditUpcomingOpen(true)}
+            className="w-full rounded-xl py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+          >
+            Edit upcoming tasks
+          </button>
         </div>
       ) : hasStarted ? (
         <div className="space-y-4">
           <DocketList docket={docket} />
-          {interactive && (
+          {canRun && (
             <>
               <DocketEditor tasks={[]} onChange={(added) => onSetDocket([...docket, ...added])} allowEdit={false} />
               {nextPlanned ? (
@@ -201,7 +232,7 @@ export function SessionCard({
         </div>
       ) : (
         <div className="space-y-4">
-          {interactive ? (
+          {canEditDocket ? (
             <DocketEditor tasks={docket} onChange={onSetDocket} allowEdit />
           ) : docket.length > 0 ? (
             <DocketList docket={docket} />
@@ -215,7 +246,7 @@ export function SessionCard({
               {formatDuration(totalPlanned)} of {formatDuration(activity.durationMin)} planned
             </p>
           )}
-          {interactive && (
+          {canRun && (
             <button
               type="button"
               onClick={() => docket[0] && onStartTask(docket[0].id)}
@@ -238,6 +269,13 @@ export function SessionCard({
             setLoggingOpen(false)
           }}
         />
+      </Sheet>
+
+      <Sheet open={editUpcomingOpen} onClose={() => setEditUpcomingOpen(false)} title="Upcoming tasks">
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          {activeTask?.title} is the current task and isn't editable here — everything after it is.
+        </p>
+        <DocketEditor tasks={upcomingTasks} onChange={handleEditUpcoming} allowEdit />
       </Sheet>
     </div>
   )

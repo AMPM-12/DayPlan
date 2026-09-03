@@ -24,8 +24,14 @@ export function FocusSessionsScreen() {
   } = useAppData()
   const now = useNow()
   const [viewedDate, setViewedDate] = useState(todayDateString())
+  // Editing a future date's docket writes straight to storage (that date
+  // isn't tracked in React state the way "today" is), so bump this to force
+  // a re-read after such an edit.
+  const [, forceRefresh] = useState(0)
 
   const isToday = viewedDate === todayDateString(now)
+  const isPast = viewedDate < todayDateString(now)
+  const canEditDocket = !isPast
   const dayState = isToday ? today : getDayState(viewedDate)
 
   const activities = useMemo(
@@ -99,12 +105,16 @@ export function FocusSessionsScreen() {
               docket={dayState.dockets?.[activity.id] ?? []}
               log={dayState.logs.find((l) => l.activityId === activity.id)}
               now={now}
-              interactive={isToday}
+              canEditDocket={canEditDocket}
+              canRun={isToday}
               activeTimer={isToday ? today.activeSessionTimer : undefined}
               anotherSessionActive={
                 !!today.activeSessionTimer && today.activeSessionTimer.activityId !== activity.id
               }
-              onSetDocket={(tasks) => setDocket(activity.id, tasks)}
+              onSetDocket={(tasks) => {
+                setDocket(viewedDate, activity.id, tasks)
+                if (!isToday) forceRefresh((t) => t + 1)
+              }}
               onStartTask={(taskId) => startSessionTask(activity.id, taskId)}
               onPause={pauseSessionTimer}
               onResume={resumeSessionTimer}

@@ -64,7 +64,7 @@ interface AppDataValue {
   notificationsEnabled: boolean
   setNotificationsEnabled: (enabled: boolean) => void
 
-  setDocket: (activityId: string, tasks: DocketTask[]) => void
+  setDocket: (date: string, activityId: string, tasks: DocketTask[]) => void
   startSessionTask: (activityId: string, taskId: string) => void
   pauseSessionTimer: () => void
   resumeSessionTimer: () => void
@@ -303,8 +303,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const getDayState = useCallback((date: string) => planRepo.getDayState(date), [])
 
   const setDocket = useCallback(
-    (activityId: string, tasks: DocketTask[]) => {
-      persistToday({ ...today, dockets: { ...today.dockets, [activityId]: tasks } })
+    (date: string, activityId: string, tasks: DocketTask[]) => {
+      if (date === today.date) {
+        persistToday({ ...today, dockets: { ...today.dockets, [activityId]: tasks } })
+        return
+      }
+      // A future date's docket can be built ahead of time; it isn't tracked
+      // in React state (only "today" is), so just persist it directly —
+      // the caller (Focus Sessions, viewing that date) re-reads it itself.
+      const state = planRepo.getDayState(date)
+      planRepo.saveDayState({ ...state, dockets: { ...state.dockets, [activityId]: tasks } })
     },
     [today, persistToday],
   )
