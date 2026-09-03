@@ -136,13 +136,7 @@ export function SessionCard({
             >
               Mark done &amp; next
             </button>
-            <button
-              type="button"
-              onClick={() => onExtend(5)}
-              className="w-full rounded-xl bg-slate-100 py-3.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
-            >
-              Add 5 more minutes
-            </button>
+            <AddTimeButtons onAdd={onExtend} />
             <button
               type="button"
               onClick={() => onCompleteTask('skipped')}
@@ -171,6 +165,7 @@ export function SessionCard({
               {formatCountdown(remainingMs)}
             </p>
           </div>
+          {!isPaused && <AddTimeButtons onAdd={onExtend} />}
           <button
             type="button"
             onClick={isPaused ? onResume : onPause}
@@ -178,6 +173,15 @@ export function SessionCard({
           >
             {isPaused ? 'Resume' : 'Pause'}
           </button>
+          {!isPaused && (
+            <button
+              type="button"
+              onClick={() => onCompleteTask('done')}
+              className="w-full rounded-xl bg-slate-100 py-3.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
+              Mark done
+            </button>
+          )}
           <button
             type="button"
             onClick={onEndEarly}
@@ -277,6 +281,25 @@ export function SessionCard({
         </p>
         <DocketEditor tasks={upcomingTasks} onChange={handleEditUpcoming} allowEdit />
       </Sheet>
+    </div>
+  )
+}
+
+const ADD_TIME_OPTIONS = [2, 5, 10, 15]
+
+function AddTimeButtons({ onAdd }: { onAdd: (minutes: number) => void }) {
+  return (
+    <div className="flex justify-center gap-2">
+      {ADD_TIME_OPTIONS.map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => onAdd(m)}
+          className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+        >
+          +{m}m
+        </button>
+      ))}
     </div>
   )
 }

@@ -346,13 +346,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     persistToday({ ...today, activeSessionTimer: { ...rest, targetEndAt } })
   }, [today, persistToday])
 
+  // Adds minutes relative to whatever's currently left — at the moment a
+  // task elapses that's ~0, so it lands on "N minutes from now" same as
+  // before; while still running it correctly extends the existing target
+  // instead of resetting it. Never used with a negative amount.
   const extendSessionTask = useCallback(
     (minutes: number) => {
       const timer = today.activeSessionTimer
-      if (!timer) return
-      const targetEndAt = new Date(Date.now() + minutes * 60_000).toISOString()
-      const { pausedRemainingMs: _paused, ...rest } = timer
-      persistToday({ ...today, activeSessionTimer: { ...rest, targetEndAt } })
+      if (!timer || timer.pausedRemainingMs !== undefined) return
+      const now = Date.now()
+      const currentRemainingMs = new Date(timer.targetEndAt).getTime() - now
+      const newRemainingMs = Math.max(0, currentRemainingMs + minutes * 60_000)
+      const targetEndAt = new Date(now + newRemainingMs).toISOString()
+      persistToday({ ...today, activeSessionTimer: { ...timer, targetEndAt } })
     },
     [today, persistToday],
   )
