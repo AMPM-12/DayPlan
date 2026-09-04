@@ -6,10 +6,12 @@ export function UpNextList({
   items,
   nowMins,
   onTap,
+  onOptions,
 }: {
   items: ScheduleItem[]
   nowMins: number
   onTap: (item: ScheduleItem) => void
+  onOptions: (item: ScheduleItem) => void
 }) {
   if (items.length === 0) return null
 
@@ -20,15 +22,19 @@ export function UpNextList({
       </h3>
       <div className="space-y-2">
         {items.map((item) => (
-          <button
+          <div
             key={item.activity.id}
-            type="button"
             onClick={() => onTap(item)}
-            className="flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/60 dark:ring-white/10"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/60 dark:ring-white/10"
           >
             <CategoryDot category={item.activity.category} />
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-slate-800 dark:text-slate-100">
+                {item.activity.isFocusSession && (
+                  <span aria-hidden className="mr-1 opacity-70">
+                    🎯
+                  </span>
+                )}
                 {item.activity.title}
               </p>
               <p className="text-xs text-slate-400 dark:text-slate-500">
@@ -38,7 +44,18 @@ export function UpNextList({
             <span className="shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
               in {formatDuration(item.start - nowMins)}
             </span>
-          </button>
+            <button
+              type="button"
+              aria-label="Block options"
+              onClick={(e) => {
+                e.stopPropagation()
+                onOptions(item)
+              }}
+              className="shrink-0 rounded-lg p-1.5 text-slate-300 dark:text-slate-600"
+            >
+              ⋯
+            </button>
+          </div>
         ))}
       </div>
     </div>

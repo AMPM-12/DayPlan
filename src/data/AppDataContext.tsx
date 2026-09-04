@@ -48,6 +48,7 @@ interface AppDataValue {
   setTodayProfileOverride: (profileId: string | undefined) => void
   toggleComplete: (activity: Activity) => void
   startNow: (activityId: string) => void
+  toggleTodayFocusSession: (activityId: string) => void
   resetOverride: () => void
   addLog: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>, alsoMarkComplete?: string) => void
   updateLog: (date: string, log: ActivityLog) => void
@@ -277,6 +278,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     persistToday(rest)
   }, [today, persistToday])
 
+  // Flips isFocusSession for today's occurrence only, on top of whatever the
+  // activity's own template says — never touches the profile/template itself.
+  // No-ops while that block's session is actively running, since changing
+  // its type out from under a live timer would leave the timer orphaned.
+  const toggleTodayFocusSession = useCallback(
+    (activityId: string) => {
+      if (today.activeSessionTimer?.activityId === activityId) return
+      const current = todayActivities.find((a) => a.id === activityId)?.isFocusSession ?? false
+      persistToday({
+        ...today,
+        focusSessionOverrides: { ...today.focusSessionOverrides, [activityId]: !current },
+      })
+    },
+    [today, todayActivities, persistToday],
+  )
+
   const addLog = useCallback(
     (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>, alsoMarkComplete?: string) => {
       const entry: ActivityLog = {
@@ -491,6 +508,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setTodayProfileOverride,
       toggleComplete,
       startNow,
+      toggleTodayFocusSession,
       resetOverride,
       addLog,
       updateLog,
@@ -529,6 +547,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setTodayProfileOverride,
       toggleComplete,
       startNow,
+      toggleTodayFocusSession,
       resetOverride,
       addLog,
       updateLog,

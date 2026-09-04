@@ -102,6 +102,13 @@ export interface DayState {
   dockets?: Record<string, DocketTask[]>
   /** At most one focus-session task timer running/paused per day. */
   activeSessionTimer?: SessionTimerState
+  /**
+   * Per-date override of a block's `isFocusSession` flag, keyed by activity
+   * id — set from the Today screen without touching the activity's own
+   * definition in its profile template. Wins over the template value for
+   * this date only; absent entries fall back to the template.
+   */
+  focusSessionOverrides?: Record<string, boolean>
 }
 
 export type ThemePreference = 'system' | 'light' | 'dark'

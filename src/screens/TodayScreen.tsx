@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../data/AppDataContext'
 import { useNow } from '../hooks/useNow'
+import type { Activity, ActivityLog } from '../types'
 import { computeSchedule, findCurrent, findUpNext, type ScheduleItem } from '../utils/schedule'
 import { formatDateHeading, nowMinutes, todayDateString, weekdayOf } from '../utils/time'
 import { NowCard } from '../components/NowCard'
@@ -21,15 +23,23 @@ export function TodayScreen() {
     setTodayProfileOverride,
     toggleComplete,
     startNow,
+    toggleTodayFocusSession,
     resetOverride,
     addLog,
+    updateLog,
     theme,
     setTheme,
     refreshIfNewDay,
   } = useAppData()
   const now = useNow()
+  const navigate = useNavigate()
   const [actionsFor, setActionsFor] = useState<ScheduleItem | null>(null)
   const [loggingFor, setLoggingFor] = useState<ScheduleItem | null>(null)
+  const [optionsFor, setOptionsFor] = useState<ScheduleItem | null>(null)
+  const [editingSessionLog, setEditingSessionLog] = useState<{
+    activity: Activity
+    log: ActivityLog
+  } | null>(null)
   const [profilePickerOpen, setProfilePickerOpen] = useState(false)
 
   useEffect(() => {
@@ -48,12 +58,42 @@ export function TodayScreen() {
   const isOverridden = !!today.profileOverride && today.profileOverride !== usualProfileId
 
   function openActions(item: ScheduleItem) {
+    // Focus-session blocks already have their own dedicated workflow
+    // (docket, timer, log) — jump straight into it instead of the regular
+    // block's actions sheet.
+    if (item.activity.isFocusSession) {
+      const log = today.logs.find((l) => l.activityId === item.activity.id)
+      if (log) {
+        // Already logged: Focus Sessions itself would require an extra tap
+        // on the "Logged" summary to reach the editable form — skip straight
+        // to it, reusing the same LogForm + updateLog the Report tab edit uses.
+        setEditingSessionLog({ activity: item.activity, log })
+      } else {
+        // Not yet logged (docket editor, in-progress, or actively running):
+        // Focus Sessions itself always shows today by default and renders
+        // each session's current state with no extra tap needed, so landing
+        // there reproduces exactly what tapping it in Focus Sessions would.
+        navigate('/focus')
+      }
+      return
+    }
     setActionsFor(item)
   }
 
   function closeActions() {
     setActionsFor(null)
   }
+
+  function openOptions(item: ScheduleItem) {
+    setOptionsFor(item)
+  }
+
+  function closeOptions() {
+    setOptionsFor(null)
+  }
+
+  const optionsForIsRunning =
+    !!optionsFor && today.activeSessionTimer?.activityId === optionsFor.activity.id
 
   return (
     <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
@@ -94,8 +134,8 @@ export function TodayScreen() {
       </header>
 
       <div className="space-y-6">
-        <NowCard item={current} nowMins={mins} onTap={openActions} />
-        <UpNextList items={upNext} nowMins={mins} onTap={openActions} />
+        <NowCard item={current} nowMins={mins} onTap={openActions} onOptions={openOptions} />
+        <UpNextList items={upNext} nowMins={mins} onTap={openActions} onOptions={openOptions} />
         {todayActivities.length === 0 ? (
           <div className="rounded-3xl bg-slate-100 p-6 text-center dark:bg-slate-800/60">
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -103,7 +143,7 @@ export function TodayScreen() {
             </p>
           </div>
         ) : (
-          <Timeline items={items} onTap={openActions} />
+          <Timeline items={items} onTap={openActions} onOptions={openOptions} />
         )}
       </div>
 
@@ -139,6 +179,69 @@ export function TodayScreen() {
             }}
           />
         )}
+      </Sheet>
+
+      <Sheet
+        open={!!editingSessionLog}
+        onClose={() => setEditingSessionLog(null)}
+        title="Edit log"
+      >
+        {editingSessionLog && (
+          <LogForm
+            activity={editingSessionLog.activity}
+            docket={today.dockets?.[editingSessionLog.activity.id]}
+            initial={editingSessionLog.log}
+            onCancel={() => setEditingSessionLog(null)}
+            onSave={(payload) => {
+              updateLog(today.date, { ...editingSessionLog.log, ...payload })
+              setEditingSessionLog(null)
+            }}
+          />
+        )}
+      </Sheet>
+
+      <Sheet
+        open={!!optionsFor}
+        onClose={closeOptions}
+        title={optionsFor?.activity.title ?? ''}
+      >
+        {optionsFor &&
+          (optionsForIsRunning ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              This session is currently running — pause or finish it before changing its type.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                toggleTodayFocusSession(optionsFor.activity.id)
+                closeOptions()
+              }}
+              className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
+                optionsFor.activity.isFocusSession
+                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
+                  : 'border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${
+                  optionsFor.activity.isFocusSession
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-slate-200 dark:bg-slate-700'
+                }`}
+              >
+                🎯
+              </span>
+              <div>
+                <p className="font-medium text-slate-900 dark:text-slate-100">Focus session</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {optionsFor.activity.isFocusSession
+                    ? 'Tap to make this a regular block for today'
+                    : 'Tap to add a task docket for today'}
+                </p>
+              </div>
+            </button>
+          ))}
       </Sheet>
 
       <Sheet open={profilePickerOpen} onClose={() => setProfilePickerOpen(false)} title="Today's plan">

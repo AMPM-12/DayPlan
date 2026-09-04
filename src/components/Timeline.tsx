@@ -6,10 +6,12 @@ import { CategoryDot } from './CategoryTag'
 function TimelineRow({
   item,
   onTap,
+  onOptions,
   markerRef,
 }: {
   item: ScheduleItem
   onTap: (item: ScheduleItem) => void
+  onOptions: (item: ScheduleItem) => void
   markerRef?: (el: HTMLDivElement | null) => void
 }) {
   const isPast = item.status === 'past'
@@ -31,30 +33,47 @@ function TimelineRow({
         />
         <div className="w-px flex-1 bg-slate-200 dark:bg-slate-700" />
       </div>
-      <button
-        type="button"
+      <div
         onClick={() => onTap(item)}
-        className={`mb-3 flex-1 rounded-2xl px-4 py-3 text-left transition-colors ${
+        className={`mb-3 flex flex-1 items-start gap-2 rounded-2xl px-4 py-3 text-left transition-colors ${
           isCurrent
             ? 'bg-indigo-50 ring-1 ring-indigo-200 dark:bg-indigo-500/10 dark:ring-indigo-500/30'
             : 'bg-white ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5'
-        } ${isPast ? 'opacity-50' : ''}`}
+        } ${isPast ? 'opacity-50' : ''} cursor-pointer`}
       >
-        <div className="flex items-center gap-2">
-          <CategoryDot category={item.activity.category} />
-          <p
-            className={`truncate font-medium text-slate-800 dark:text-slate-100 ${
-              item.completed ? 'line-through decoration-slate-400' : ''
-            }`}
-          >
-            {item.activity.title}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <CategoryDot category={item.activity.category} />
+            <p
+              className={`truncate font-medium text-slate-800 dark:text-slate-100 ${
+                item.completed ? 'line-through decoration-slate-400' : ''
+              }`}
+            >
+              {item.activity.isFocusSession && (
+                <span aria-hidden className="mr-1 opacity-70">
+                  🎯
+                </span>
+              )}
+              {item.activity.title}
+            </p>
+            {item.completed && <span className="text-emerald-500">✓</span>}
+          </div>
+          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+            {formatDuration(item.activity.durationMin)} · ends {formatClock(item.end)}
           </p>
-          {item.completed && <span className="text-emerald-500">✓</span>}
         </div>
-        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-          {formatDuration(item.activity.durationMin)} · ends {formatClock(item.end)}
-        </p>
-      </button>
+        <button
+          type="button"
+          aria-label="Block options"
+          onClick={(e) => {
+            e.stopPropagation()
+            onOptions(item)
+          }}
+          className="shrink-0 rounded-lg p-1.5 text-slate-300 dark:text-slate-600"
+        >
+          ⋯
+        </button>
+      </div>
     </div>
   )
 }
@@ -62,9 +81,11 @@ function TimelineRow({
 export function Timeline({
   items,
   onTap,
+  onOptions,
 }: {
   items: ScheduleItem[]
   onTap: (item: ScheduleItem) => void
+  onOptions: (item: ScheduleItem) => void
 }) {
   const currentRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -97,6 +118,7 @@ export function Timeline({
             key={item.activity.id}
             item={item}
             onTap={onTap}
+            onOptions={onOptions}
             markerRef={item.status === 'current' ? (el) => (currentRef.current = el) : undefined}
           />
         ))}

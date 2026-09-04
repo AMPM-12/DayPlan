@@ -6,10 +6,12 @@ export function NowCard({
   item,
   nowMins,
   onTap,
+  onOptions,
 }: {
   item: ScheduleItem | undefined
   nowMins: number
   onTap: (item: ScheduleItem) => void
+  onOptions: (item: ScheduleItem) => void
 }) {
   if (!item) {
     return (
@@ -29,10 +31,9 @@ export function NowCard({
   const accent = cat?.color ?? '#4f46e5'
 
   return (
-    <button
-      type="button"
+    <div
       onClick={() => onTap(item)}
-      className="w-full rounded-3xl p-6 text-left shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
+      className="w-full cursor-pointer rounded-3xl p-6 text-left shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
       style={{ backgroundColor: `${accent}14` }}
     >
       <div className="mb-2 flex items-center gap-2">
@@ -41,13 +42,29 @@ export function NowCard({
           Now
         </span>
         {item.isShifted && (
-          <span className="ml-auto rounded-full bg-slate-900/5 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-slate-400">
+          <span className="rounded-full bg-slate-900/5 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-slate-400">
             Shifted
           </span>
         )}
+        <button
+          type="button"
+          aria-label="Block options"
+          onClick={(e) => {
+            e.stopPropagation()
+            onOptions(item)
+          }}
+          className="ml-auto shrink-0 rounded-lg p-1.5 text-slate-400/70 hover:text-slate-500 dark:text-slate-500 dark:hover:text-slate-400"
+        >
+          ⋯
+        </button>
       </div>
 
       <h2 className="text-2xl font-semibold leading-snug text-slate-900 dark:text-slate-50">
+        {item.activity.isFocusSession && (
+          <span aria-hidden className="mr-1.5 align-[-0.1em] text-lg opacity-70">
+            🎯
+          </span>
+        )}
         {item.activity.title}
       </h2>
 
@@ -65,6 +82,6 @@ export function NowCard({
       <p className="mt-2.5 text-sm font-medium text-slate-700 dark:text-slate-300">
         {remaining > 0 ? `${formatDuration(remaining)} remaining` : 'Wrapping up'}
       </p>
-    </button>
+    </div>
   )
 }

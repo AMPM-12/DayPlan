@@ -30,5 +30,11 @@ export function resolveActivities(
   const profileId = resolveProfileId(date, dayState, dayMapping, defaultProfileId)
   const profile =
     profiles.find((p) => p.id === profileId) ?? profiles.find((p) => p.id === defaultProfileId)
-  return profile?.activities ?? []
+  const activities = profile?.activities ?? []
+
+  const overrides = dayState?.focusSessionOverrides
+  if (!overrides) return activities
+  return activities.map((a) =>
+    a.id in overrides ? { ...a, isFocusSession: overrides[a.id] } : a,
+  )
 }
