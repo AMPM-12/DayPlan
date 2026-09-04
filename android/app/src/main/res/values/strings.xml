@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DayPlan</string>
+    <string name="title_activity_main">DayPlan</string>
+    <string name="package_name">com.ampm12.dayplan</string>
+    <string name="custom_url_scheme">com.ampm12.dayplan</string>
+</resources>
