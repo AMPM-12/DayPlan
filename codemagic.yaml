@@ -1,0 +1,132 @@
+# DayPlan CI — Codemagic
+#
+# Adapted from the pattern used by Steward's codemagic.yaml (a sibling app,
+# same Codemagic account) per Abraham's description — this file was NOT
+# copied from Steward's actual repo (no filesystem access to it from here),
+# so treat it as a from-scratch implementation of that pattern, not a
+# verified-identical copy.
+#
+# Every identifying name below (integration name, beta group, env var
+# groups) is DayPlan's own — none of Steward's literal values are reused.
+#
+# All three workflows are MANUAL-TRIGGER ONLY, deliberately: there is no
+# `triggering:` block on any of them, so nothing here ever auto-builds on
+# push. Start builds from the Codemagic dashboard.
+
+workflows:
+  dayplan-ios-testflight:
+    name: DayPlan – iOS TestFlight (internal)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: dayplan_app_store_connect
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.ampm12.dayplan
+      vars:
+        BUNDLE_ID: "com.ampm12.dayplan"
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        # Numeric App Store Connect app ID (Apps > DayPlan > App Information).
+        # Only exists once the app record has been created in App Store
+        # Connect — fill in via this workflow's environment variables in the
+        # Codemagic dashboard, not here.
+        APP_STORE_APPLE_ID: ""
+      node: 24
+      xcode: latest
+    scripts:
+      - name: Install npm dependencies
+        script: npm ci
+      - name: Build web app
+        script: npm run build
+      - name: Sync Capacitor iOS platform
+        script: npx cap sync ios
+      - name: Set up keychain
+        script: keychain initialize
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+      - name: Set up code signing settings on the Xcode project
+        script: xcode-project use-profiles
+      - name: Bump build number
+        script: |
+          # A unix timestamp, not an incrementing counter — avoids
+          # CFBundleVersion collisions across parallel/rebuilt runs.
+          cd ios/App
+          agvtool new-version -all $(date +%s)
+      - name: Build ipa for distribution
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - "DayPlan Internal Testers"
+
+  dayplan-android-debug:
+    name: DayPlan – Android debug APK
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      node: 24
+      java: 17
+    scripts:
+      - name: Install npm dependencies
+        script: npm ci
+      - name: Build web app
+        script: npm run build
+      - name: Sync Capacitor Android platform
+        script: npx cap sync android
+      - name: Build debug APK
+        script: |
+          cd android
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+
+  dayplan-android-release:
+    name: DayPlan – Android release AAB (signed)
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      # Codemagic dashboard > Environment variable groups > dayplan_android_keystore
+      # Holds: CM_KEYSTORE (base64-encoded .keystore/.jks file),
+      # CM_KEYSTORE_PASSWORD, CM_KEY_ALIAS, CM_KEY_PASSWORD — all marked
+      # "Secure" so they never appear in build logs.
+      groups:
+        - dayplan_android_keystore
+      node: 24
+      java: 17
+    scripts:
+      - name: Install npm dependencies
+        script: npm ci
+      - name: Build web app
+        script: npm run build
+      - name: Sync Capacitor Android platform
+        script: npx cap sync android
+      - name: Decode signing keystore
+        script: |
+          echo "$CM_KEYSTORE" | base64 --decode > "$CM_BUILD_DIR/dayplan-release.keystore"
+          cat > android/keystore.properties <<EOF
+          storeFile=$CM_BUILD_DIR/dayplan-release.keystore
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          keyPassword=$CM_KEY_PASSWORD
+          EOF
+      - name: Build signed release AAB
+        script: |
+          cd android
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/**/*.aab
