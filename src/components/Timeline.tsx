@@ -5,11 +5,13 @@ import { CategoryDot } from './CategoryTag'
 
 function TimelineRow({
   item,
+  sessionNumbers,
   onTap,
   onOptions,
   markerRef,
 }: {
   item: ScheduleItem
+  sessionNumbers: Map<string, number>
   onTap: (item: ScheduleItem) => void
   onOptions: (item: ScheduleItem) => void
   markerRef?: (el: HTMLDivElement | null) => void
@@ -50,8 +52,8 @@ function TimelineRow({
               }`}
             >
               {item.activity.isFocusSession && (
-                <span aria-hidden className="mr-1 opacity-70">
-                  🎯
+                <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                  🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
                 </span>
               )}
               {item.activity.title}
@@ -80,10 +82,12 @@ function TimelineRow({
 
 export function Timeline({
   items,
+  sessionNumbers,
   onTap,
   onOptions,
 }: {
   items: ScheduleItem[]
+  sessionNumbers: Map<string, number>
   onTap: (item: ScheduleItem) => void
   onOptions: (item: ScheduleItem) => void
 }) {
@@ -117,6 +121,7 @@ export function Timeline({
           <TimelineRow
             key={item.activity.id}
             item={item}
+            sessionNumbers={sessionNumbers}
             onTap={onTap}
             onOptions={onOptions}
             markerRef={item.status === 'current' ? (el) => (currentRef.current = el) : undefined}

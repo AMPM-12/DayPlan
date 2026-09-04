@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAppData } from '../data/AppDataContext'
 import { useNow } from '../hooks/useNow'
 import { resolveActivities } from '../utils/profiles'
+import { sortFocusSessions } from '../utils/focusSessions'
 import { addDays, formatDateHeading, todayDateString } from '../utils/time'
 import { SessionCard } from '../components/SessionCard'
 
@@ -24,6 +26,14 @@ export function FocusSessionsScreen() {
     updateLog,
   } = useAppData()
   const now = useNow()
+  const location = useLocation()
+  // Set only when arriving via a deep link from Today (see TodayScreen's
+  // openActions) — the id of the specific session to scroll to and briefly
+  // highlight, so it's obvious which one was tapped.
+  const focusActivityId = (location.state as { focusActivityId?: string } | null)
+    ?.focusActivityId
+  const [highlightId, setHighlightId] = useState(focusActivityId)
+  const cardRefs = useRef(new Map<string, HTMLDivElement>())
   const [viewedDate, setViewedDate] = useState(todayDateString())
   // Editing a future date's docket writes straight to storage (that date
   // isn't tracked in React state the way "today" is), so bump this to force
@@ -43,14 +53,18 @@ export function FocusSessionsScreen() {
     [isToday, todayActivities, viewedDate, dayState, profiles, dayMapping, defaultProfileId],
   )
 
-  const sessions = useMemo(
-    () =>
-      activities
-        .filter((a) => a.isFocusSession)
-        .slice()
-        .sort((a, b) => a.startTime.localeCompare(b.startTime)),
-    [activities],
-  )
+  const sessions = useMemo(() => sortFocusSessions(activities), [activities])
+
+  useEffect(() => {
+    if (!focusActivityId) return
+    const el = cardRefs.current.get(focusActivityId)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const timer = setTimeout(() => setHighlightId(undefined), 2000)
+    return () => clearTimeout(timer)
+    // Only ever runs once per mount — focusActivityId comes from the
+    // navigation that mounted this screen and never changes afterward.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
@@ -99,35 +113,47 @@ export function FocusSessionsScreen() {
       ) : (
         <div className="space-y-4">
           {sessions.map((activity, index) => (
-            <SessionCard
+            <div
               key={activity.id}
-              activity={activity}
-              sessionNumber={index + 1}
-              docket={dayState.dockets?.[activity.id] ?? []}
-              log={dayState.logs.find((l) => l.activityId === activity.id)}
-              now={now}
-              canEditDocket={canEditDocket}
-              canRun={isToday}
-              activeTimer={isToday ? today.activeSessionTimer : undefined}
-              anotherSessionActive={
-                !!today.activeSessionTimer && today.activeSessionTimer.activityId !== activity.id
-              }
-              onSetDocket={(tasks) => {
-                setDocket(viewedDate, activity.id, tasks)
-                if (!isToday) forceRefresh((t) => t + 1)
+              ref={(el) => {
+                if (el) cardRefs.current.set(activity.id, el)
+                else cardRefs.current.delete(activity.id)
               }}
-              onStartTask={(taskId) => startSessionTask(activity.id, taskId)}
-              onPause={pauseSessionTimer}
-              onResume={resumeSessionTimer}
-              onExtend={extendSessionTask}
-              onCompleteTask={completeSessionTask}
-              onEndEarly={endSessionEarly}
-              onSaveLog={(log) => addLog(log, log.completedAsPlanned ? activity.id : undefined)}
-              onUpdateLog={(log) => {
-                updateLog(viewedDate, log)
-                if (!isToday) forceRefresh((t) => t + 1)
-              }}
-            />
+              className={`rounded-3xl ring-2 transition-shadow duration-500 ${
+                highlightId === activity.id
+                  ? 'ring-indigo-400 dark:ring-indigo-500/70'
+                  : 'ring-transparent'
+              }`}
+            >
+              <SessionCard
+                activity={activity}
+                sessionNumber={index + 1}
+                docket={dayState.dockets?.[activity.id] ?? []}
+                log={dayState.logs.find((l) => l.activityId === activity.id)}
+                now={now}
+                canEditDocket={canEditDocket}
+                canRun={isToday}
+                activeTimer={isToday ? today.activeSessionTimer : undefined}
+                anotherSessionActive={
+                  !!today.activeSessionTimer && today.activeSessionTimer.activityId !== activity.id
+                }
+                onSetDocket={(tasks) => {
+                  setDocket(viewedDate, activity.id, tasks)
+                  if (!isToday) forceRefresh((t) => t + 1)
+                }}
+                onStartTask={(taskId) => startSessionTask(activity.id, taskId)}
+                onPause={pauseSessionTimer}
+                onResume={resumeSessionTimer}
+                onExtend={extendSessionTask}
+                onCompleteTask={completeSessionTask}
+                onEndEarly={endSessionEarly}
+                onSaveLog={(log) => addLog(log, log.completedAsPlanned ? activity.id : undefined)}
+                onUpdateLog={(log) => {
+                  updateLog(viewedDate, log)
+                  if (!isToday) forceRefresh((t) => t + 1)
+                }}
+              />
+            </div>
           ))}
         </div>
       )}

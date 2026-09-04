@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../data/AppDataContext'
 import { useNow } from '../hooks/useNow'
 import type { Activity, ActivityLog } from '../types'
 import { computeSchedule, findCurrent, findUpNext, type ScheduleItem } from '../utils/schedule'
+import { focusSessionNumbers } from '../utils/focusSessions'
 import { formatDateHeading, nowMinutes, todayDateString, weekdayOf } from '../utils/time'
 import { NowCard } from '../components/NowCard'
 import { UpNextList } from '../components/UpNextList'
@@ -51,6 +52,9 @@ export function TodayScreen() {
   const items = computeSchedule(todayActivities, today.completedIds, today.override, mins)
   const current = findCurrent(items)
   const upNext = findUpNext(items, 3)
+  // Same chronological "Session N" numbering Focus Sessions computes for
+  // today's date — shared via utils/focusSessions so the numbers always match.
+  const sessionNumbers = useMemo(() => focusSessionNumbers(todayActivities), [todayActivities])
 
   const usualProfileId = dayMapping[weekdayOf(today.date)] ?? defaultProfileId
   const effectiveProfileId = today.profileOverride ?? usualProfileId
@@ -73,7 +77,9 @@ export function TodayScreen() {
         // Focus Sessions itself always shows today by default and renders
         // each session's current state with no extra tap needed, so landing
         // there reproduces exactly what tapping it in Focus Sessions would.
-        navigate('/focus')
+        // Pass which session was tapped so it scrolls into view and briefly
+        // highlights, rather than just landing on the top of the tab.
+        navigate('/focus', { state: { focusActivityId: item.activity.id } })
       }
       return
     }
@@ -134,8 +140,20 @@ export function TodayScreen() {
       </header>
 
       <div className="space-y-6">
-        <NowCard item={current} nowMins={mins} onTap={openActions} onOptions={openOptions} />
-        <UpNextList items={upNext} nowMins={mins} onTap={openActions} onOptions={openOptions} />
+        <NowCard
+          item={current}
+          nowMins={mins}
+          sessionNumbers={sessionNumbers}
+          onTap={openActions}
+          onOptions={openOptions}
+        />
+        <UpNextList
+          items={upNext}
+          nowMins={mins}
+          sessionNumbers={sessionNumbers}
+          onTap={openActions}
+          onOptions={openOptions}
+        />
         {todayActivities.length === 0 ? (
           <div className="rounded-3xl bg-slate-100 p-6 text-center dark:bg-slate-800/60">
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -143,7 +161,12 @@ export function TodayScreen() {
             </p>
           </div>
         ) : (
-          <Timeline items={items} onTap={openActions} onOptions={openOptions} />
+          <Timeline
+            items={items}
+            sessionNumbers={sessionNumbers}
+            onTap={openActions}
+            onOptions={openOptions}
+          />
         )}
       </div>
 

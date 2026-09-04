@@ -5,11 +5,13 @@ import { formatClock, formatDuration } from '../utils/time'
 export function NowCard({
   item,
   nowMins,
+  sessionNumbers,
   onTap,
   onOptions,
 }: {
   item: ScheduleItem | undefined
   nowMins: number
+  sessionNumbers: Map<string, number>
   onTap: (item: ScheduleItem) => void
   onOptions: (item: ScheduleItem) => void
 }) {
@@ -59,12 +61,12 @@ export function NowCard({
         </button>
       </div>
 
+      {item.activity.isFocusSession && (
+        <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
+        </p>
+      )}
       <h2 className="text-2xl font-semibold leading-snug text-slate-900 dark:text-slate-50">
-        {item.activity.isFocusSession && (
-          <span aria-hidden className="mr-1.5 align-[-0.1em] text-lg opacity-70">
-            🎯
-          </span>
-        )}
         {item.activity.title}
       </h2>
 

@@ -5,11 +5,13 @@ import { CategoryDot } from './CategoryTag'
 export function UpNextList({
   items,
   nowMins,
+  sessionNumbers,
   onTap,
   onOptions,
 }: {
   items: ScheduleItem[]
   nowMins: number
+  sessionNumbers: Map<string, number>
   onTap: (item: ScheduleItem) => void
   onOptions: (item: ScheduleItem) => void
 }) {
@@ -31,8 +33,8 @@ export function UpNextList({
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-slate-800 dark:text-slate-100">
                 {item.activity.isFocusSession && (
-                  <span aria-hidden className="mr-1 opacity-70">
-                    🎯
+                  <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                    🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
                   </span>
                 )}
                 {item.activity.title}
