@@ -20,6 +20,7 @@ export function FocusSessionsScreen() {
     pauseSessionTimer,
     resumeSessionTimer,
     extendSessionTask,
+    switchSessionTask,
     completeSessionTask,
     endSessionEarly,
     addLog,
@@ -59,7 +60,7 @@ export function FocusSessionsScreen() {
     if (!focusActivityId) return
     const el = cardRefs.current.get(focusActivityId)
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    const timer = setTimeout(() => setHighlightId(undefined), 2000)
+    const timer = setTimeout(() => setHighlightId(undefined), 4500)
     return () => clearTimeout(timer)
     // Only ever runs once per mount — focusActivityId comes from the
     // navigation that mounted this screen and never changes afterward.
@@ -119,9 +120,9 @@ export function FocusSessionsScreen() {
                 if (el) cardRefs.current.set(activity.id, el)
                 else cardRefs.current.delete(activity.id)
               }}
-              className={`rounded-3xl ring-2 transition-shadow duration-500 ${
+              className={`rounded-3xl ring-4 transition-shadow duration-1000 ease-out ${
                 highlightId === activity.id
-                  ? 'ring-indigo-400 dark:ring-indigo-500/70'
+                  ? 'ring-indigo-600 dark:ring-indigo-400'
                   : 'ring-transparent'
               }`}
             >
@@ -145,11 +146,22 @@ export function FocusSessionsScreen() {
                 onPause={pauseSessionTimer}
                 onResume={resumeSessionTimer}
                 onExtend={extendSessionTask}
+                onSwitchTask={switchSessionTask}
                 onCompleteTask={completeSessionTask}
                 onEndEarly={endSessionEarly}
-                onSaveLog={(log) => addLog(log, log.completedAsPlanned ? activity.id : undefined)}
-                onUpdateLog={(log) => {
-                  updateLog(viewedDate, log)
+                onSaveLog={(log, updatedDocket) =>
+                  addLog(
+                    log,
+                    log.completedAsPlanned ? activity.id : undefined,
+                    updatedDocket ? { activityId: activity.id, tasks: updatedDocket } : undefined,
+                  )
+                }
+                onUpdateLog={(log, updatedDocket) => {
+                  updateLog(
+                    viewedDate,
+                    log,
+                    updatedDocket ? { activityId: activity.id, tasks: updatedDocket } : undefined,
+                  )
                   if (!isToday) forceRefresh((t) => t + 1)
                 }}
               />

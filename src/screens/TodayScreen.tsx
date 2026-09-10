@@ -196,8 +196,12 @@ export function TodayScreen() {
             activity={loggingFor.activity}
             docket={today.dockets?.[loggingFor.activity.id]}
             onCancel={() => setLoggingFor(null)}
-            onSave={(log) => {
-              addLog(log, log.completedAsPlanned ? loggingFor.activity.id : undefined)
+            onSave={(log, updatedDocket) => {
+              addLog(
+                log,
+                log.completedAsPlanned ? loggingFor.activity.id : undefined,
+                updatedDocket ? { activityId: loggingFor.activity.id, tasks: updatedDocket } : undefined,
+              )
               setLoggingFor(null)
             }}
           />
@@ -215,8 +219,14 @@ export function TodayScreen() {
             docket={today.dockets?.[editingSessionLog.activity.id]}
             initial={editingSessionLog.log}
             onCancel={() => setEditingSessionLog(null)}
-            onSave={(payload) => {
-              updateLog(today.date, { ...editingSessionLog.log, ...payload })
+            onSave={(payload, updatedDocket) => {
+              updateLog(
+                today.date,
+                { ...editingSessionLog.log, ...payload },
+                updatedDocket
+                  ? { activityId: editingSessionLog.activity.id, tasks: updatedDocket }
+                  : undefined,
+              )
               setEditingSessionLog(null)
             }}
           />

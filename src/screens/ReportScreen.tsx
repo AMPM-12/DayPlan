@@ -275,9 +275,13 @@ export function ReportScreen() {
             docket={editingDocket}
             initial={editingLog}
             onCancel={() => setEditingLog(null)}
-            onSave={(payload) => {
+            onSave={(payload, updatedDocket) => {
               const date = editingLog.date
-              updateLog(date, { ...editingLog, ...payload })
+              updateLog(
+                date,
+                { ...editingLog, ...payload },
+                updatedDocket ? { activityId: editingLog.activityId, tasks: updatedDocket } : undefined,
+              )
               setEditingLog(null)
               setRefreshTick((t) => t + 1)
             }}

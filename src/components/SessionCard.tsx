@@ -33,6 +33,7 @@ export function SessionCard({
   onPause,
   onResume,
   onExtend,
+  onSwitchTask,
   onCompleteTask,
   onEndEarly,
   onSaveLog,
@@ -55,14 +56,22 @@ export function SessionCard({
   onPause: () => void
   onResume: () => void
   onExtend: (minutes: number) => void
-  onCompleteTask: (status: DocketTaskStatus) => void
+  /** Switches the live timer to a different upcoming (planned) task. */
+  onSwitchTask: (taskId: string) => void
+  onCompleteTask: (status: DocketTaskStatus, actualMinutes: number) => void
   onEndEarly: () => void
-  onSaveLog: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>) => void
+  onSaveLog: (
+    log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>,
+    updatedDocket?: DocketTask[],
+  ) => void
   /** Overwrites an already-saved log in place — used instead of onSaveLog when `log` is set. */
-  onUpdateLog: (log: ActivityLog) => void
+  onUpdateLog: (log: ActivityLog, updatedDocket?: DocketTask[]) => void
 }) {
   const [loggingOpen, setLoggingOpen] = useState(false)
   const [editUpcomingOpen, setEditUpcomingOpen] = useState(false)
+  // Set while confirming a "Mark done" — pre-filled with the computed
+  // elapsed minutes, editable before it's actually recorded.
+  const [completingMinutes, setCompletingMinutes] = useState<number | null>(null)
 
   const isActiveHere = canRun && activeTimer?.activityId === activity.id
   const activeTaskIndex = isActiveHere ? docket.findIndex((t) => t.id === activeTimer!.taskId) : -1
@@ -74,15 +83,37 @@ export function SessionCard({
       : Math.max(0, new Date(activeTimer!.targetEndAt).getTime() - now.getTime())
     : 0
   const isElapsed = isActiveHere && !isPaused && remainingMs <= 0
+  const activeElapsedMinutes = activeTask
+    ? Math.max(0, Math.round((activeTask.plannedMinutes * 60_000 - remainingMs) / 60_000))
+    : 0
 
-  // Only the tasks after the one currently being timed are safe to edit —
-  // everything up to and including it (done/skipped, or actively running)
-  // is left untouched.
-  const upcomingTasks = activeTaskIndex >= 0 ? docket.slice(activeTaskIndex + 1) : []
+  function beginComplete() {
+    setCompletingMinutes(activeElapsedMinutes)
+  }
+  function confirmComplete() {
+    if (completingMinutes === null) return
+    onCompleteTask('done', completingMinutes)
+    setCompletingMinutes(null)
+  }
+  function handleSkip() {
+    onCompleteTask('skipped', activeElapsedMinutes)
+  }
+
+  // Every still-planned task other than the one currently being timed is
+  // safe to edit/reorder/delete — done/skipped tasks and the active task
+  // itself are fixed history. Status-based rather than positional, since
+  // switching (not strictly sequential) can leave a still-planned task
+  // sitting either before or after the active task's array position.
+  const upcomingTasks = docket.filter((t) => t.status === 'planned' && t.id !== activeTask?.id)
 
   function handleEditUpcoming(newUpcoming: DocketTask[]) {
-    const prefix = activeTaskIndex >= 0 ? docket.slice(0, activeTaskIndex + 1) : docket
-    onSetDocket([...prefix, ...newUpcoming])
+    const fixed = docket.filter((t) => t.status !== 'planned' || t.id === activeTask?.id)
+    const activePos = fixed.findIndex((t) => t.id === activeTask?.id)
+    if (activePos === -1) {
+      onSetDocket([...newUpcoming, ...fixed])
+      return
+    }
+    onSetDocket([...fixed.slice(0, activePos + 1), ...newUpcoming, ...fixed.slice(activePos + 1)])
   }
 
   const hasStarted = docket.some((t) => t.status !== 'planned') || isActiveHere
@@ -132,21 +163,32 @@ export function SessionCard({
             </p>
           </div>
           <div className="space-y-2.5">
-            <button
-              type="button"
-              onClick={() => onCompleteTask('done')}
-              className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
-            >
-              Mark done &amp; next
-            </button>
-            <AddTimeButtons onAdd={onExtend} />
-            <button
-              type="button"
-              onClick={() => onCompleteTask('skipped')}
-              className="w-full rounded-xl py-2 text-sm font-medium text-slate-400 dark:text-slate-500"
-            >
-              Skip
-            </button>
+            {completingMinutes !== null ? (
+              <CompleteConfirm
+                minutes={completingMinutes}
+                onChange={setCompletingMinutes}
+                onCancel={() => setCompletingMinutes(null)}
+                onConfirm={confirmComplete}
+              />
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={beginComplete}
+                  className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
+                >
+                  Mark done &amp; next
+                </button>
+                <AddTimeButtons onAdd={onExtend} />
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  className="w-full rounded-xl py-2 text-sm font-medium text-slate-400 dark:text-slate-500"
+                >
+                  Skip
+                </button>
+              </>
+            )}
           </div>
           <DocketList docket={docket} />
           <button
@@ -176,15 +218,23 @@ export function SessionCard({
           >
             {isPaused ? 'Resume' : 'Pause'}
           </button>
-          {!isPaused && (
-            <button
-              type="button"
-              onClick={() => onCompleteTask('done')}
-              className="w-full rounded-xl bg-slate-100 py-3.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
-            >
-              Mark done
-            </button>
-          )}
+          {!isPaused &&
+            (completingMinutes !== null ? (
+              <CompleteConfirm
+                minutes={completingMinutes}
+                onChange={setCompletingMinutes}
+                onCancel={() => setCompletingMinutes(null)}
+                onConfirm={confirmComplete}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={beginComplete}
+                className="w-full rounded-xl bg-slate-100 py-3.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                Mark done
+              </button>
+            ))}
           <button
             type="button"
             onClick={onEndEarly}
@@ -192,7 +242,11 @@ export function SessionCard({
           >
             End session early
           </button>
-          <DocketList docket={docket} />
+          <DocketList
+            docket={docket}
+            activeTaskId={activeTask?.id}
+            onSelectTask={onSwitchTask}
+          />
           <button
             type="button"
             onClick={() => setEditUpcomingOpen(true)}
@@ -254,14 +308,23 @@ export function SessionCard({
             </p>
           )}
           {canRun && (
-            <button
-              type="button"
-              onClick={() => docket[0] && onStartTask(docket[0].id)}
-              disabled={docket.length === 0 || anotherSessionActive}
-              className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white disabled:opacity-40"
-            >
-              Start
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => docket[0] && onStartTask(docket[0].id)}
+                disabled={docket.length === 0 || anotherSessionActive}
+                className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white disabled:opacity-40"
+              >
+                Start
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoggingOpen(true)}
+                className="w-full rounded-xl py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+              >
+                Log this session
+              </button>
+            </>
           )}
         </div>
       )}
@@ -276,11 +339,11 @@ export function SessionCard({
           docket={docket}
           initial={log}
           onCancel={() => setLoggingOpen(false)}
-          onSave={(logPayload) => {
+          onSave={(logPayload, updatedDocket) => {
             if (log) {
-              onUpdateLog({ ...log, ...logPayload })
+              onUpdateLog({ ...log, ...logPayload }, updatedDocket)
             } else {
-              onSaveLog(logPayload)
+              onSaveLog(logPayload, updatedDocket)
             }
             setLoggingOpen(false)
           }}
@@ -316,25 +379,101 @@ function AddTimeButtons({ onAdd }: { onAdd: (minutes: number) => void }) {
   )
 }
 
-function DocketList({ docket }: { docket: DocketTask[] }) {
+function DocketList({
+  docket,
+  activeTaskId,
+  onSelectTask,
+}: {
+  docket: DocketTask[]
+  /** The task currently being timed, if any — shown but never selectable. */
+  activeTaskId?: string
+  /** When provided, other planned (not yet done/skipped) tasks become tappable to switch the live timer to them. */
+  onSelectTask?: (taskId: string) => void
+}) {
   if (docket.length === 0) return null
   return (
     <ul className="space-y-1.5">
-      {docket.map((task) => (
-        <li
-          key={task.id}
-          className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/60"
-        >
-          <span className="min-w-0 truncate text-slate-700 dark:text-slate-300">
-            {STATUS_ICON[task.status]} {task.title}
-          </span>
-          <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
-            {typeof task.actualMinutes === 'number'
-              ? formatDuration(task.actualMinutes)
-              : formatDuration(task.plannedMinutes)}
-          </span>
-        </li>
-      ))}
+      {docket.map((task) => {
+        const isActive = task.id === activeTaskId
+        const isSwitchable = !!onSelectTask && task.status === 'planned' && !isActive
+        const content = (
+          <>
+            <span className="min-w-0 truncate text-slate-700 dark:text-slate-300">
+              {STATUS_ICON[task.status]} {task.title}
+              {isActive && <span className="ml-1 text-indigo-500 dark:text-indigo-400">• timing</span>}
+            </span>
+            <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+              {typeof task.actualMinutes === 'number'
+                ? formatDuration(task.actualMinutes)
+                : formatDuration(task.plannedMinutes)}
+            </span>
+          </>
+        )
+        return isSwitchable ? (
+          <li key={task.id}>
+            <button
+              type="button"
+              onClick={() => onSelectTask(task.id)}
+              className="flex w-full items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-left text-sm hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-700/60"
+            >
+              {content}
+            </button>
+          </li>
+        ) : (
+          <li
+            key={task.id}
+            className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/60"
+          >
+            {content}
+          </li>
+        )
+      })}
     </ul>
+  )
+}
+
+function CompleteConfirm({
+  minutes,
+  onChange,
+  onCancel,
+  onConfirm,
+}: {
+  minutes: number
+  onChange: (minutes: number) => void
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div className="space-y-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          Actual minutes spent
+        </span>
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          value={minutes}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </label>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 rounded-xl bg-slate-100 py-2.5 font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          className="flex-1 rounded-xl bg-indigo-600 py-2.5 font-semibold text-white"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
   )
 }

@@ -28,6 +28,15 @@ import { useActivityNotifications } from '../hooks/useActivityNotifications'
 import { useSessionTimerNotification } from '../hooks/useSessionTimerNotification'
 import { usePushTransitionsSync } from '../hooks/usePushTransitionsSync'
 
+// A task's remaining time honors any banked elapsedMs from a prior period
+// that ended via switching away (rather than completing) — so (re)starting
+// it, whether via Start, Resume, auto-advance, or switching back to it,
+// always continues from where it left off instead of resetting to the
+// full planned duration.
+function remainingMsForTask(task: DocketTask): number {
+  return Math.max(0, task.plannedMinutes * 60_000 - (task.elapsedMs ?? 0))
+}
+
 interface AppDataValue {
   profiles: PlanProfile[]
   defaultProfileId: string
@@ -50,8 +59,16 @@ interface AppDataValue {
   startNow: (activityId: string) => void
   toggleTodayFocusSession: (activityId: string) => void
   resetOverride: () => void
-  addLog: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>, alsoMarkComplete?: string) => void
-  updateLog: (date: string, log: ActivityLog) => void
+  addLog: (
+    log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>,
+    alsoMarkComplete?: string,
+    docketUpdate?: { activityId: string; tasks: DocketTask[] },
+  ) => void
+  updateLog: (
+    date: string,
+    log: ActivityLog,
+    docketUpdate?: { activityId: string; tasks: DocketTask[] },
+  ) => void
 
   theme: ThemePreference
   setTheme: (theme: ThemePreference) => void
@@ -71,7 +88,8 @@ interface AppDataValue {
   pauseSessionTimer: () => void
   resumeSessionTimer: () => void
   extendSessionTask: (minutes: number) => void
-  completeSessionTask: (status: DocketTaskStatus) => void
+  switchSessionTask: (taskId: string) => void
+  completeSessionTask: (status: DocketTaskStatus, actualMinutes: number) => void
   endSessionEarly: () => void
 }
 
@@ -295,7 +313,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   )
 
   const addLog = useCallback(
-    (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>, alsoMarkComplete?: string) => {
+    (
+      log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>,
+      alsoMarkComplete?: string,
+      docketUpdate?: { activityId: string; tasks: DocketTask[] },
+    ) => {
       const entry: ActivityLog = {
         ...log,
         id: uuid(),
@@ -307,24 +329,42 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           ? [...today.completedIds, alsoMarkComplete]
           : today.completedIds
       const logs = [...today.logs.filter((l) => l.activityId !== log.activityId), entry]
-      persistToday({ ...today, logs, completedIds })
+      // Folded into the same persistToday as the log write, not a separate
+      // setDocket call — two sequential top-level persistToday calls in one
+      // handler would each read the same pre-update `today` closure, and the
+      // second would silently clobber the first's write.
+      const dockets = docketUpdate
+        ? { ...today.dockets, [docketUpdate.activityId]: docketUpdate.tasks }
+        : today.dockets
+      persistToday({ ...today, logs, completedIds, dockets })
     },
     [today, persistToday],
   )
 
   // Updates an already-saved log in place (by id) on its own date — unlike
   // addLog this never creates a new entry or reassigns which date/block it
-  // belongs to, and works for any date, not just today.
+  // belongs to, and works for any date, not just today. The optional
+  // docketUpdate is folded into the same write for the same reason as addLog.
   const updateLog = useCallback(
-    (date: string, log: ActivityLog) => {
+    (
+      date: string,
+      log: ActivityLog,
+      docketUpdate?: { activityId: string; tasks: DocketTask[] },
+    ) => {
       if (date === today.date) {
         const logs = today.logs.map((l) => (l.id === log.id ? log : l))
-        persistToday({ ...today, logs })
+        const dockets = docketUpdate
+          ? { ...today.dockets, [docketUpdate.activityId]: docketUpdate.tasks }
+          : today.dockets
+        persistToday({ ...today, logs, dockets })
         return
       }
       const state = planRepo.getDayState(date)
       const logs = state.logs.map((l) => (l.id === log.id ? log : l))
-      planRepo.saveDayState({ ...state, logs })
+      const dockets = docketUpdate
+        ? { ...state.dockets, [docketUpdate.activityId]: docketUpdate.tasks }
+        : state.dockets
+      planRepo.saveDayState({ ...state, logs, dockets })
     },
     [today, persistToday],
   )
@@ -357,7 +397,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const task = today.dockets?.[activityId]?.find((t) => t.id === taskId)
       if (!task) return
       const now = new Date()
-      const targetEndAt = new Date(now.getTime() + task.plannedMinutes * 60_000).toISOString()
+      const targetEndAt = new Date(now.getTime() + remainingMsForTask(task)).toISOString()
       persistToday({
         ...today,
         activeSessionTimer: { activityId, taskId, startedAt: now.toISOString(), targetEndAt },
@@ -398,17 +438,56 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [today, persistToday],
   )
 
+  // Not strictly sequential: switches the active timer to a different
+  // planned task, banking the outgoing task's elapsed time (via
+  // remainingMsForTask's inverse) so selecting it again later resumes
+  // rather than restarts. Mirrors pause/resume's wall-clock-target
+  // approach — never a countdown that's decremented in place.
+  const switchSessionTask = useCallback(
+    (newTaskId: string) => {
+      const timer = today.activeSessionTimer
+      if (!timer || timer.taskId === newTaskId) return
+      const tasks = today.dockets?.[timer.activityId] ?? []
+      const currentTask = tasks.find((t) => t.id === timer.taskId)
+      const targetTask = tasks.find((t) => t.id === newTaskId)
+      if (!currentTask || !targetTask || targetTask.status !== 'planned') return
+
+      const now = Date.now()
+      const currentRemainingMs =
+        timer.pausedRemainingMs !== undefined
+          ? timer.pausedRemainingMs
+          : Math.max(0, new Date(timer.targetEndAt).getTime() - now)
+      const currentElapsedMs = Math.max(
+        0,
+        currentTask.plannedMinutes * 60_000 - currentRemainingMs,
+      )
+
+      const updatedTasks = tasks.map((t) =>
+        t.id === currentTask.id ? { ...t, elapsedMs: currentElapsedMs } : t,
+      )
+      const targetEndAt = new Date(now + remainingMsForTask(targetTask)).toISOString()
+
+      persistToday({
+        ...today,
+        dockets: { ...today.dockets, [timer.activityId]: updatedTasks },
+        activeSessionTimer: {
+          activityId: timer.activityId,
+          taskId: newTaskId,
+          startedAt: new Date(now).toISOString(),
+          targetEndAt,
+        },
+      })
+    },
+    [today, persistToday],
+  )
+
   const completeSessionTask = useCallback(
-    (status: DocketTaskStatus) => {
+    (status: DocketTaskStatus, actualMinutes: number) => {
       const timer = today.activeSessionTimer
       if (!timer) return
       const tasks = today.dockets?.[timer.activityId] ?? []
-      const actualMinutes = Math.max(
-        0,
-        Math.round((Date.now() - new Date(timer.startedAt).getTime()) / 60_000),
-      )
       const updatedTasks = tasks.map((t) =>
-        t.id === timer.taskId ? { ...t, status, actualMinutes } : t,
+        t.id === timer.taskId ? { ...t, status, actualMinutes, elapsedMs: undefined } : t,
       )
       const currentIndex = tasks.findIndex((t) => t.id === timer.taskId)
       const next = updatedTasks.slice(currentIndex + 1).find((t) => t.status === 'planned')
@@ -416,7 +495,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
       if (next) {
         const now = new Date()
-        const targetEndAt = new Date(now.getTime() + next.plannedMinutes * 60_000).toISOString()
+        const targetEndAt = new Date(now.getTime() + remainingMsForTask(next)).toISOString()
         persistToday({
           ...today,
           dockets,
@@ -526,6 +605,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       pauseSessionTimer,
       resumeSessionTimer,
       extendSessionTask,
+      switchSessionTask,
       completeSessionTask,
       endSessionEarly,
     }),
@@ -565,6 +645,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       pauseSessionTimer,
       resumeSessionTimer,
       extendSessionTask,
+      switchSessionTask,
       completeSessionTask,
       endSessionEarly,
     ],

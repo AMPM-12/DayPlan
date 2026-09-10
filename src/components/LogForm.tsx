@@ -20,7 +20,15 @@ export function LogForm({
   docket?: DocketTask[]
   /** An existing log to pre-fill from, when reopening one for editing. */
   initial?: ActivityLog
-  onSave: (log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>) => void
+  /**
+   * `updatedDocket` is passed whenever `docket` was provided — its task
+   * list and order are always identical to `docket`, only `actualMinutes`
+   * values may have changed. Only meaningful for focus-session logs.
+   */
+  onSave: (
+    log: Omit<ActivityLog, 'id' | 'createdAt' | 'date'>,
+    updatedDocket?: DocketTask[],
+  ) => void
   onCancel: () => void
 }) {
   const isFocusSession = !!activity.isFocusSession
@@ -38,20 +46,35 @@ export function LogForm({
   )
   const [disciplineScore, setDisciplineScore] = useState<number | undefined>(initial?.disciplineScore)
   const [notes, setNotes] = useState(initial?.notes ?? '')
+  // Only tasks that already have a recorded actualMinutes are editable here
+  // — a never-run task's planned time isn't "a recorded value" to correct.
+  const [taskMinutes, setTaskMinutes] = useState<Record<string, number>>(() =>
+    Object.fromEntries(
+      (docket ?? [])
+        .filter((t) => typeof t.actualMinutes === 'number')
+        .map((t) => [t.id, t.actualMinutes as number]),
+    ),
+  )
 
   function handleSave() {
-    onSave({
-      activityId: activity.id,
-      activityTitle: activity.title,
-      completedAsPlanned,
-      intendedMinutesSpent,
-      actualActivityTitle: completedAsPlanned ? undefined : actualActivityTitle || undefined,
-      actualMinutesSpent,
-      rating: isFocusSession ? undefined : rating,
-      productivityScore: isFocusSession ? productivityScore : undefined,
-      disciplineScore: isFocusSession ? disciplineScore : undefined,
-      notes: notes || undefined,
-    })
+    const updatedDocket = docket?.map((t) =>
+      t.id in taskMinutes ? { ...t, actualMinutes: taskMinutes[t.id] } : t,
+    )
+    onSave(
+      {
+        activityId: activity.id,
+        activityTitle: activity.title,
+        completedAsPlanned,
+        intendedMinutesSpent,
+        actualActivityTitle: completedAsPlanned ? undefined : actualActivityTitle || undefined,
+        actualMinutesSpent,
+        rating: isFocusSession ? undefined : rating,
+        productivityScore: isFocusSession ? productivityScore : undefined,
+        disciplineScore: isFocusSession ? disciplineScore : undefined,
+        notes: notes || undefined,
+      },
+      updatedDocket,
+    )
   }
 
   return (
@@ -68,11 +91,26 @@ export function LogForm({
                 <span className="min-w-0 truncate">
                   {STATUS_LABEL[task.status]} {task.title}
                 </span>
-                <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
-                  {typeof task.actualMinutes === 'number'
-                    ? formatDuration(task.actualMinutes)
-                    : formatDuration(task.plannedMinutes) + ' planned'}
-                </span>
+                {task.id in taskMinutes ? (
+                  <span className="flex shrink-0 items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      value={taskMinutes[task.id]}
+                      onChange={(e) =>
+                        setTaskMinutes((prev) => ({ ...prev, [task.id]: Number(e.target.value) }))
+                      }
+                      aria-label={`Actual minutes for ${task.title}`}
+                      className="w-14 rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-center text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                    min
+                  </span>
+                ) : (
+                  <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                    {formatDuration(task.plannedMinutes)} planned
+                  </span>
+                )}
               </li>
             ))}
           </ul>

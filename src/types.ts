@@ -60,6 +60,14 @@ export interface DocketTask {
   plannedMinutes: number
   actualMinutes?: number
   status: DocketTaskStatus
+  /**
+   * Milliseconds already spent on this task from an earlier period that
+   * ended by switching away (not by completing it) — banked so resuming it
+   * later continues from where it left off instead of restarting at its
+   * full planned duration. Undefined for a task that's never been active,
+   * or once it's marked done/skipped (actualMinutes is the final record).
+   */
+  elapsedMs?: number
 }
 
 export interface SessionTimerState {
