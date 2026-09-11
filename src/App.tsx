@@ -7,6 +7,7 @@ import { EditPlanScreen } from './screens/EditPlanScreen'
 import { FocusSessionsScreen } from './screens/FocusSessionsScreen'
 import { AwakenScreen } from './screens/AwakenScreen'
 import { ReportScreen } from './screens/ReportScreen'
+import { MoreScreen } from './screens/MoreScreen'
 import { BottomNav } from './components/BottomNav'
 
 function Shell() {
@@ -26,6 +27,7 @@ function Shell() {
         <Route path="/focus" element={<FocusSessionsScreen />} />
         <Route path="/awaken" element={<AwakenScreen />} />
         <Route path="/report" element={<ReportScreen />} />
+        <Route path="/more" element={<MoreScreen />} />
       </Routes>
       {!hideNav && (
         <div className="no-print">
