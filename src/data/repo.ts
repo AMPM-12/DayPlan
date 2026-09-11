@@ -5,6 +5,7 @@ import type {
   DayMapping,
   DayState,
   PlanProfile,
+  PlanTask,
   ThemePreference,
   Weekday,
 } from '../types'
@@ -19,6 +20,7 @@ const DEFAULT_PROFILE_ID_KEY = 'dailyplan.defaultProfileId.v1'
 const NOTIFICATIONS_ENABLED_KEY = 'dailyplan.notificationsEnabled.v1'
 const DEVICE_ID_KEY = 'dailyplan.deviceId.v1'
 const FOCUS_SESSION_MIGRATION_KEY = 'dailyplan.focusSessionMigration.v1'
+const TASKS_KEY = 'dailyplan.tasks.v1'
 const LEGACY_FOCUS_SESSION_TITLE = 'Work — SOLID'
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
@@ -54,6 +56,8 @@ export interface PlanRepo {
   getNotificationsEnabled(): boolean
   saveNotificationsEnabled(enabled: boolean): void
   getDeviceId(): string
+  getTasks(): PlanTask[]
+  saveTasks(tasks: PlanTask[]): void
 }
 
 function emptyDayState(date: string): DayState {
@@ -219,6 +223,15 @@ class LocalStoragePlanRepo implements PlanRepo {
       localStorage.setItem(DEVICE_ID_KEY, id)
     }
     return id
+  }
+
+  getTasks(): PlanTask[] {
+    const raw = localStorage.getItem(TASKS_KEY)
+    return safeParse<PlanTask[]>(raw, [])
+  }
+
+  saveTasks(tasks: PlanTask[]): void {
+    localStorage.setItem(TASKS_KEY, JSON.stringify(tasks))
   }
 }
 

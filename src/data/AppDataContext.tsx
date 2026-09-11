@@ -18,6 +18,7 @@ import type {
   DocketTask,
   DocketTaskStatus,
   PlanProfile,
+  PlanTask,
   ThemePreference,
   Weekday,
 } from '../types'
@@ -93,6 +94,13 @@ interface AppDataValue {
   /** actualMinutes defaults to the task's plannedMinutes when omitted (e.g. an unattended AWAKEN practice completing on its own). */
   completeSessionTask: (status: DocketTaskStatus, actualMinutes?: number) => void
   endSessionEarly: () => void
+
+  tasks: PlanTask[]
+  addTask: (title: string, estimatedMinutes: number) => void
+  updateTask: (task: PlanTask) => void
+  deleteTask: (id: string) => void
+  toggleTaskComplete: (id: string) => void
+  reorderTasks: (ordered: PlanTask[]) => void
 }
 
 const AppDataContext = createContext<AppDataValue | null>(null)
@@ -106,6 +114,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     planRepo.getNotificationsEnabled(),
   )
   const [theme, setThemeState] = useState<ThemePreference>(() => planRepo.getTheme())
+  const [tasks, setTasksState] = useState<PlanTask[]>(() => planRepo.getTasks())
 
   const persistProfiles = useCallback((next: PlanProfile[]) => {
     planRepo.saveProfiles(next)
@@ -194,6 +203,66 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       persistProfiles(profiles.map((p) => (p.id === profileId ? { ...p, activities } : p)))
     },
     [profiles, persistProfiles],
+  )
+
+  const persistTasks = useCallback((next: PlanTask[]) => {
+    planRepo.saveTasks(next)
+    setTasksState(next)
+  }, [])
+
+  const addTask = useCallback(
+    (title: string, estimatedMinutes: number) => {
+      const now = new Date().toISOString()
+      const nextOrder = tasks.reduce((max, t) => Math.max(max, t.order), -1) + 1
+      const task: PlanTask = {
+        id: uuid(),
+        title,
+        estimatedMinutes,
+        timeSpentMinutes: 0,
+        completed: false,
+        order: nextOrder,
+        createdAt: now,
+        updatedAt: now,
+      }
+      persistTasks([...tasks, task])
+    },
+    [tasks, persistTasks],
+  )
+
+  const updateTask = useCallback(
+    (task: PlanTask) => {
+      const updated = { ...task, updatedAt: new Date().toISOString() }
+      persistTasks(tasks.map((t) => (t.id === task.id ? updated : t)))
+    },
+    [tasks, persistTasks],
+  )
+
+  const deleteTask = useCallback(
+    (id: string) => {
+      persistTasks(tasks.filter((t) => t.id !== id))
+    },
+    [tasks, persistTasks],
+  )
+
+  // Never touches timeSpentMinutes — completion and time spent are
+  // deliberately independent (see PlanTask's own comment).
+  const toggleTaskComplete = useCallback(
+    (id: string) => {
+      persistTasks(
+        tasks.map((t) =>
+          t.id === id ? { ...t, completed: !t.completed, updatedAt: new Date().toISOString() } : t,
+        ),
+      )
+    },
+    [tasks, persistTasks],
+  )
+
+  const reorderTasks = useCallback(
+    (ordered: PlanTask[]) => {
+      const now = new Date().toISOString()
+      persistTasks(ordered.map((t, i) => (t.order === i ? t : { ...t, order: i, updatedAt: now })))
+    },
+    [persistTasks],
   )
 
   const setDayMapping = useCallback(
@@ -674,6 +743,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       switchSessionTask,
       completeSessionTask,
       endSessionEarly,
+      tasks,
+      addTask,
+      updateTask,
+      deleteTask,
+      toggleTaskComplete,
+      reorderTasks,
     }),
     [
       profiles,
@@ -714,6 +789,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       switchSessionTask,
       completeSessionTask,
       endSessionEarly,
+      tasks,
+      addTask,
+      updateTask,
+      deleteTask,
+      toggleTaskComplete,
+      reorderTasks,
     ],
   )
 

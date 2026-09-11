@@ -129,6 +129,30 @@ export interface DayState {
   focusSessionOverrides?: Record<string, boolean>
 }
 
+/**
+ * A standalone to-do, independent of any date or Activity block — unlike
+ * DocketTask above (day-scoped, nested under a specific focus-session
+ * activity), a PlanTask lives in its own top-level list and persists
+ * indefinitely. Phase 1 (this type) has no Focus Session wiring at all;
+ * `timeSpentMinutes` is edited by hand only. When Phase 2 adds real
+ * elapsed-time tracking from Focus Sessions, that manual edit path stays —
+ * it's the correction mechanism for a mis-timed session, not a stopgap to
+ * remove once auto-tracking exists.
+ */
+export interface PlanTask {
+  id: string
+  title: string
+  /** The original estimate — never mutated automatically, including once time is logged against it. */
+  estimatedMinutes: number
+  /** Manually edited only (Phase 1); the intended correction path even after Phase 2 adds automatic tracking. */
+  timeSpentMinutes: number
+  completed: boolean
+  /** Flat, full-list sort position — renumbered on every drag-drop, same convention as Activity ordering. */
+  order: number
+  createdAt: string // ISO
+  updatedAt: string // ISO
+}
+
 export type ThemePreference = 'system' | 'light' | 'dark'
 
 export interface AppDataExport {
