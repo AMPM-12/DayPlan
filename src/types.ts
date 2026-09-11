@@ -66,6 +66,15 @@ export type DocketTaskStatus = 'planned' | 'done' | 'skipped'
 
 export interface DocketTask {
   id: string
+  /**
+   * A snapshot, same convention as ActivityLog.activityTitle — for a
+   * free-text item this is the whole story (edited directly). For a
+   * LINKED item (taskId set), this is only ever a fallback for if the
+   * linked PlanTask is later deleted from the Task List; while the task
+   * still exists, every display site resolves the live PlanTask.title
+   * instead (see resolveDocketTaskTitle in utils/focusSessions.ts) —
+   * this field is never re-read for a linked item's day-to-day display.
+   */
   title: string
   plannedMinutes: number
   actualMinutes?: number
@@ -78,6 +87,19 @@ export interface DocketTask {
    * or once it's marked done/skipped (actualMinutes is the final record).
    */
   elapsedMs?: number
+  /**
+   * Present only when this docket entry was added via "Add from Tasks"
+   * (references PlanTask.id) rather than typed as free text. Purely a
+   * structural link in this phase — completing/timing a linked entry
+   * still only ever touches THIS DocketTask's own fields (actualMinutes/
+   * elapsedMs/status), never the underlying PlanTask's timeSpentMinutes;
+   * that stays a manual edit in the Task List, same as any other task.
+   * Deleting this docket entry never touches the PlanTask either — they
+   * live in entirely separate stores (day-scoped dockets vs. the
+   * standalone dailyplan.tasks.v1 list) with no cascade in either
+   * direction.
+   */
+  taskId?: string
 }
 
 export interface SessionTimerState {

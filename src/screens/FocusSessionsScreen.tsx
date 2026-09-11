@@ -14,6 +14,7 @@ export function FocusSessionsScreen() {
     dayMapping,
     today,
     todayActivities,
+    tasks,
     getDayState,
     setDocket,
     startSessionTask,
@@ -130,6 +131,7 @@ export function FocusSessionsScreen() {
                 activity={activity}
                 sessionNumber={index + 1}
                 docket={dayState.dockets?.[activity.id] ?? []}
+                planTasks={tasks}
                 log={dayState.logs.find((l) => l.activityId === activity.id)}
                 now={now}
                 canEditDocket={canEditDocket}

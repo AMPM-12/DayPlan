@@ -1,6 +1,14 @@
 import { useState } from 'react'
-import type { Activity, ActivityLog, DocketTask, DocketTaskStatus, SessionTimerState } from '../types'
+import type {
+  Activity,
+  ActivityLog,
+  DocketTask,
+  DocketTaskStatus,
+  PlanTask,
+  SessionTimerState,
+} from '../types'
 import { formatClock, formatCountdown, formatDuration, parseTimeToMinutes } from '../utils/time'
+import { resolveDocketTaskTitle } from '../utils/focusSessions'
 import { DocketEditor } from './DocketEditor'
 import { Sheet } from './Sheet'
 import { LogForm } from './LogForm'
@@ -15,6 +23,7 @@ export function SessionCard({
   activity,
   sessionNumber,
   docket,
+  planTasks,
   log,
   now,
   canEditDocket,
@@ -36,6 +45,8 @@ export function SessionCard({
   /** This day's 1-based position among its focus sessions, e.g. 1, 2, 3… however many exist. */
   sessionNumber: number
   docket: DocketTask[]
+  /** The household's standalone Task List — read-only, resolves linked entries' live titles and powers "Add from Tasks" inside DocketEditor. */
+  planTasks: PlanTask[]
   log: ActivityLog | undefined
   now: Date
   /** Today or any future date: add/edit/reorder/delete the docket ahead of time. */
@@ -141,7 +152,7 @@ export function SessionCard({
             <ul className="mt-2 space-y-1">
               {docket.map((task) => (
                 <li key={task.id} className="text-xs text-slate-400 dark:text-slate-500">
-                  {STATUS_ICON[task.status]} {task.title}
+                  {STATUS_ICON[task.status]} {resolveDocketTaskTitle(task, planTasks)}
                 </li>
               ))}
             </ul>
@@ -152,7 +163,7 @@ export function SessionCard({
           <div className="rounded-2xl bg-slate-50 p-5 text-center dark:bg-slate-800/60">
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Time's up</p>
             <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {activeTask?.title}
+              {activeTask && resolveDocketTaskTitle(activeTask, planTasks)}
             </p>
           </div>
           <div className="space-y-2.5">
@@ -183,7 +194,7 @@ export function SessionCard({
               </>
             )}
           </div>
-          <DocketList docket={docket} />
+          <DocketList docket={docket} planTasks={planTasks} />
           <button
             type="button"
             onClick={() => setEditUpcomingOpen(true)}
@@ -196,7 +207,7 @@ export function SessionCard({
         <div className="space-y-4">
           <div className="rounded-2xl bg-slate-50 p-6 text-center dark:bg-slate-800/60">
             <p className="mb-1 text-sm font-medium text-slate-500 dark:text-slate-400">
-              {activeTask?.title}
+              {activeTask && resolveDocketTaskTitle(activeTask, planTasks)}
               {isPaused && ' · Paused'}
             </p>
             <p className="text-5xl font-bold tabular-nums text-slate-900 dark:text-slate-50">
@@ -237,6 +248,7 @@ export function SessionCard({
           </button>
           <DocketList
             docket={docket}
+            planTasks={planTasks}
             activeTaskId={activeTask?.id}
             onSelectTask={onSwitchTask}
           />
@@ -250,10 +262,15 @@ export function SessionCard({
         </div>
       ) : hasStarted ? (
         <div className="space-y-4">
-          <DocketList docket={docket} />
+          <DocketList docket={docket} planTasks={planTasks} />
           {canRun && (
             <>
-              <DocketEditor tasks={[]} onChange={(added) => onSetDocket([...docket, ...added])} allowEdit={false} />
+              <DocketEditor
+                tasks={[]}
+                planTasks={planTasks}
+                onChange={(added) => onSetDocket([...docket, ...added])}
+                allowEdit={false}
+              />
               {nextPlanned ? (
                 <button
                   type="button"
@@ -287,9 +304,9 @@ export function SessionCard({
       ) : (
         <div className="space-y-4">
           {canEditDocket ? (
-            <DocketEditor tasks={docket} onChange={onSetDocket} allowEdit />
+            <DocketEditor tasks={docket} planTasks={planTasks} onChange={onSetDocket} allowEdit />
           ) : docket.length > 0 ? (
-            <DocketList docket={docket} />
+            <DocketList docket={docket} planTasks={planTasks} />
           ) : (
             <p className="text-sm text-slate-400 dark:text-slate-500">
               No docket was built for this session.
@@ -330,6 +347,7 @@ export function SessionCard({
         <LogForm
           activity={activity}
           docket={docket}
+          planTasks={planTasks}
           initial={log}
           onCancel={() => setLoggingOpen(false)}
           onSave={(logPayload, updatedDocket) => {
@@ -345,9 +363,10 @@ export function SessionCard({
 
       <Sheet open={editUpcomingOpen} onClose={() => setEditUpcomingOpen(false)} title="Upcoming tasks">
         <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          {activeTask?.title} is the current task and isn't editable here — everything after it is.
+          {activeTask && resolveDocketTaskTitle(activeTask, planTasks)} is the current task and isn't
+          editable here — everything after it is.
         </p>
-        <DocketEditor tasks={upcomingTasks} onChange={handleEditUpcoming} allowEdit />
+        <DocketEditor tasks={upcomingTasks} planTasks={planTasks} onChange={handleEditUpcoming} allowEdit />
       </Sheet>
     </div>
   )
@@ -374,10 +393,13 @@ function AddTimeButtons({ onAdd }: { onAdd: (minutes: number) => void }) {
 
 function DocketList({
   docket,
+  planTasks,
   activeTaskId,
   onSelectTask,
 }: {
   docket: DocketTask[]
+  /** Read-only — resolves a linked entry's live title. */
+  planTasks: PlanTask[]
   /** The task currently being timed, if any — shown but never selectable. */
   activeTaskId?: string
   /** When provided, other planned (not yet done/skipped) tasks become tappable to switch the live timer to them. */
@@ -392,7 +414,12 @@ function DocketList({
         const content = (
           <>
             <span className="min-w-0 truncate text-slate-700 dark:text-slate-300">
-              {STATUS_ICON[task.status]} {task.title}
+              {STATUS_ICON[task.status]} {resolveDocketTaskTitle(task, planTasks)}
+              {task.taskId && (
+                <span className="ml-1 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                  ✅ Task
+                </span>
+              )}
               {isActive && <span className="ml-1 text-indigo-500 dark:text-indigo-400">• timing</span>}
             </span>
             <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">

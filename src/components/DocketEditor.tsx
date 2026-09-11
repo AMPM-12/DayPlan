@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { v4 as uuid } from 'uuid'
-import type { DocketTask } from '../types'
+import type { DocketTask, PlanTask } from '../types'
 import { formatDuration } from '../utils/time'
+import { remainingMinutesForPlanTask, resolveDocketTaskTitle } from '../utils/focusSessions'
 
 const LONG_PRESS_MS = 350
 const MOVE_CANCEL_PX = 8
@@ -32,15 +33,25 @@ function computeTargetIndex(rects: Rect[], draggedId: string, pointerY: number):
 
 export function DocketEditor({
   tasks,
+  planTasks,
   onChange,
   allowEdit,
 }: {
   tasks: DocketTask[]
+  /**
+   * The household's standalone Task List — read-only here, used only to
+   * resolve a linked entry's live title (resolveDocketTaskTitle) and to
+   * power "Add from Tasks". Never mutated from this component; selecting
+   * or removing a linked docket entry never touches a PlanTask.
+   */
+  planTasks: PlanTask[]
   onChange: (tasks: DocketTask[]) => void
   allowEdit: boolean
 }) {
   const [title, setTitle] = useState('')
   const [minutes, setMinutes] = useState(25)
+  const [pickerOpen, setPickerOpen] = useState(false)
+
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editMinutes, setEditMinutes] = useState(0)
@@ -60,6 +71,25 @@ export function DocketEditor({
     setTitle('')
   }
 
+  // plannedMinutes is only ever a SEED from the task's current remaining
+  // time (estimatedMinutes - timeSpentMinutes) — a one-time default for
+  // this session's own plan, never re-derived or kept in sync afterward;
+  // the household can freely edit it right after adding, same as any
+  // free-text entry's minutes.
+  function addFromTask(planTask: PlanTask) {
+    onChange([
+      ...tasks,
+      {
+        id: uuid(),
+        title: planTask.title,
+        plannedMinutes: remainingMinutesForPlanTask(planTask),
+        status: 'planned',
+        taskId: planTask.id,
+      },
+    ])
+    setPickerOpen(false)
+  }
+
   function removeTask(id: string) {
     onChange(tasks.filter((t) => t.id !== id))
   }
@@ -71,13 +101,25 @@ export function DocketEditor({
   }
 
   function saveEdit() {
-    const t = editTitle.trim()
-    if (!t || editMinutes <= 0 || !editingTaskId) return
-    onChange(
-      tasks.map((task) =>
-        task.id === editingTaskId ? { ...task, title: t, plannedMinutes: editMinutes } : task,
-      ),
-    )
+    if (editMinutes <= 0 || !editingTaskId) return
+    const editing = tasks.find((t) => t.id === editingTaskId)
+    if (!editing) return
+    if (editing.taskId) {
+      // Linked entry: title isn't editable here at all (it always tracks
+      // the live PlanTask — see resolveDocketTaskTitle) — only its
+      // per-session plannedMinutes.
+      onChange(
+        tasks.map((t) => (t.id === editingTaskId ? { ...t, plannedMinutes: editMinutes } : t)),
+      )
+    } else {
+      const t = editTitle.trim()
+      if (!t) return
+      onChange(
+        tasks.map((task) =>
+          task.id === editingTaskId ? { ...task, title: t, plannedMinutes: editMinutes } : task,
+        ),
+      )
+    }
     setEditingTaskId(null)
   }
 
@@ -189,6 +231,11 @@ export function DocketEditor({
   const others = drag ? tasks.filter((t) => t.id !== drag.id) : tasks
   const draggedTask = drag ? tasks.find((t) => t.id === drag.id) : undefined
   const draggedRect = drag ? drag.rects.find((r) => r.id === drag.id) : undefined
+  const editingTask = editingTaskId ? tasks.find((t) => t.id === editingTaskId) : undefined
+  // "Add from Tasks" only ever offers open work — same reasoning as the
+  // Task List showing a "Clear completed" action instead of ever letting
+  // you plan a session around something already finished.
+  const incompletePlanTasks = planTasks.filter((t) => !t.completed)
 
   return (
     <div className="space-y-2">
@@ -200,19 +247,28 @@ export function DocketEditor({
             )}
             {editingTaskId === task.id ? (
               <div className="space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      saveEdit()
-                    }
-                  }}
-                  autoFocus
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                />
+                {editingTask?.taskId ? (
+                  <p className="rounded-lg bg-white px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    {resolveDocketTaskTitle(editingTask, planTasks)}
+                    <span className="ml-1.5 text-xs font-medium text-indigo-500 dark:text-indigo-400">
+                      (from Tasks — rename it there)
+                    </span>
+                  </p>
+                ) : (
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        saveEdit()
+                      }
+                    }}
+                    autoFocus
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  />
+                )}
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -252,8 +308,13 @@ export function DocketEditor({
                 className={`flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60 ${allowEdit ? 'cursor-pointer' : ''}`}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {task.title}
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <span className="truncate">{resolveDocketTaskTitle(task, planTasks)}</span>
+                    {task.taskId && (
+                      <span className="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                        ✅ Task
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500">
                     {formatDuration(task.plannedMinutes)}
@@ -304,8 +365,13 @@ export function DocketEditor({
             className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-xl ring-1 ring-indigo-300 dark:bg-slate-800 dark:ring-indigo-500/50"
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                {draggedTask.title}
+              <p className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+                <span className="truncate">{resolveDocketTaskTitle(draggedTask, planTasks)}</span>
+                {draggedTask.taskId && (
+                  <span className="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                    ✅ Task
+                  </span>
+                )}
               </p>
               <p className="text-xs text-slate-400 dark:text-slate-500">
                 {formatDuration(draggedTask.plannedMinutes)}
@@ -346,6 +412,43 @@ export function DocketEditor({
           Add
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setPickerOpen((v) => !v)}
+        className="w-full rounded-xl py-2 text-center text-sm font-medium text-indigo-600 dark:text-indigo-400"
+      >
+        {pickerOpen ? 'Close' : '+ Add from Tasks'}
+      </button>
+
+      {pickerOpen && (
+        <div className="space-y-1.5 rounded-xl bg-slate-50 p-2 dark:bg-slate-800/60">
+          {incompletePlanTasks.length === 0 ? (
+            <p className="px-2 py-1.5 text-center text-xs text-slate-400 dark:text-slate-500">
+              No open tasks — add some in the Tasks tab first.
+            </p>
+          ) : (
+            incompletePlanTasks.map((pt) => {
+              const remaining = remainingMinutesForPlanTask(pt)
+              return (
+                <button
+                  key={pt.id}
+                  type="button"
+                  onClick={() => addFromTask(pt)}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg bg-white px-3 py-2.5 text-left text-sm dark:bg-slate-800"
+                >
+                  <span className="min-w-0 truncate font-medium text-slate-700 dark:text-slate-200">
+                    {pt.title}
+                  </span>
+                  <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                    {formatDuration(remaining)} left
+                  </span>
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
     </div>
   )
 }

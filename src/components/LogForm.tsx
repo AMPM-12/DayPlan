@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { Activity, ActivityLog, DocketTask } from '../types'
+import type { Activity, ActivityLog, DocketTask, PlanTask } from '../types'
 import { RatingBar } from './RatingBar'
 import { formatDuration } from '../utils/time'
+import { resolveDocketTaskTitle } from '../utils/focusSessions'
 
 const STATUS_LABEL: Record<DocketTask['status'], string> = {
   done: '✓',
@@ -12,12 +13,15 @@ const STATUS_LABEL: Record<DocketTask['status'], string> = {
 export function LogForm({
   activity,
   docket,
+  planTasks,
   initial,
   onSave,
   onCancel,
 }: {
   activity: Activity
   docket?: DocketTask[]
+  /** Read-only — resolves a linked docket entry's live title. Only meaningful when docket is provided. */
+  planTasks?: PlanTask[]
   /** An existing log to pre-fill from, when reopening one for editing. */
   initial?: ActivityLog
   /**
@@ -89,7 +93,7 @@ export function LogForm({
                 className="flex items-center justify-between gap-2 text-sm text-slate-600 dark:text-slate-400"
               >
                 <span className="min-w-0 truncate">
-                  {STATUS_LABEL[task.status]} {task.title}
+                  {STATUS_LABEL[task.status]} {resolveDocketTaskTitle(task, planTasks ?? [])}
                 </span>
                 {task.id in taskMinutes ? (
                   <span className="flex shrink-0 items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
@@ -101,7 +105,7 @@ export function LogForm({
                       onChange={(e) =>
                         setTaskMinutes((prev) => ({ ...prev, [task.id]: Number(e.target.value) }))
                       }
-                      aria-label={`Actual minutes for ${task.title}`}
+                      aria-label={`Actual minutes for ${resolveDocketTaskTitle(task, planTasks ?? [])}`}
                       className="w-14 rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-center text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     />
                     min
