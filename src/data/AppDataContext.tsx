@@ -99,6 +99,7 @@ interface AppDataValue {
   addTask: (title: string, estimatedMinutes: number) => void
   updateTask: (task: PlanTask) => void
   deleteTask: (id: string) => void
+  clearCompletedTasks: () => void
   toggleTaskComplete: (id: string) => void
   reorderTasks: (ordered: PlanTask[]) => void
 }
@@ -243,6 +244,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     [tasks, persistTasks],
   )
+
+  // Bulk version of deleteTask, scoped to completed tasks only — incomplete
+  // tasks (and their own relative order) are untouched, and order isn't
+  // renumbered here (same as a single deleteTask leaving a gap): the next
+  // drag-drop is what renumbers a list, not a delete.
+  const clearCompletedTasks = useCallback(() => {
+    persistTasks(tasks.filter((t) => !t.completed))
+  }, [tasks, persistTasks])
 
   // Never touches timeSpentMinutes — completion and time spent are
   // deliberately independent (see PlanTask's own comment).
@@ -670,6 +679,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setDefaultProfileId(planRepo.getDefaultProfileId())
     setDayMappingState(planRepo.getDayMapping())
     setToday(planRepo.getDayState(todayDateString()))
+    setTasksState(planRepo.getTasks())
   }, [])
 
   // A date is "locked in" the first time it's no longer today, using whatever
@@ -747,6 +757,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       addTask,
       updateTask,
       deleteTask,
+      clearCompletedTasks,
       toggleTaskComplete,
       reorderTasks,
     }),
@@ -793,6 +804,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       addTask,
       updateTask,
       deleteTask,
+      clearCompletedTasks,
       toggleTaskComplete,
       reorderTasks,
     ],

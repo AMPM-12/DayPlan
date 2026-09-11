@@ -162,4 +162,6 @@ export interface AppDataExport {
   defaultProfileId: string
   dayMapping: DayMapping
   dayStates: DayState[]
+  /** Absent in a backup taken before the Task List existed — treated as "no tasks," not an error, on restore. */
+  tasks?: PlanTask[]
 }

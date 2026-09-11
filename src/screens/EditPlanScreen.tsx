@@ -427,9 +427,9 @@ export function EditPlanScreen() {
           {pendingImport ? (
             <div className="space-y-4">
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                This will replace all profiles, the weekly schedule, and every day's history
-                (completions, overrides, and logs) with the contents of this file. This can't be
-                undone.
+                This will replace all profiles, the weekly schedule, every day's history
+                (completions, overrides, and logs), and your task list with the contents of this
+                file. This can't be undone.
               </p>
               <div className="flex gap-3">
                 <button
@@ -455,8 +455,8 @@ export function EditPlanScreen() {
                   Export
                 </p>
                 <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-                  Download every profile, the weekly schedule, and all day history as one JSON
-                  file.
+                  Download every profile, the weekly schedule, all day history, and your task
+                  list as one JSON file.
                 </p>
                 <button
                   type="button"

@@ -30,6 +30,11 @@ export function parseAppDataExport(raw: string): AppDataExport {
   if (!Array.isArray(d.dayStates)) {
     throw new Error('The backup is missing its day history.')
   }
+  // Absent entirely on a backup taken before the Task List existed — that's
+  // fine (restores as "no tasks"); only reject it if present but malformed.
+  if (d.tasks !== undefined && !Array.isArray(d.tasks)) {
+    throw new Error('The backup\'s task list is invalid.')
+  }
 
   return d as unknown as AppDataExport
 }

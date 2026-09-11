@@ -197,6 +197,7 @@ class LocalStoragePlanRepo implements PlanRepo {
       defaultProfileId: this.getDefaultProfileId(),
       dayMapping: this.getDayMapping(),
       dayStates: this.getAllDayStates(),
+      tasks: this.getTasks(),
     }
   }
 
@@ -206,6 +207,12 @@ class LocalStoragePlanRepo implements PlanRepo {
     this.saveDayMapping(data.dayMapping)
     this.clearAllDayStates()
     data.dayStates.forEach((state) => this.saveDayState(state))
+    // Same full-replace semantics as profiles/dayStates above, not a
+    // merge. Absent on a pre-Task-List backup — falls back to [] so
+    // restoring an old file still succeeds instead of erroring, same
+    // "missing means none" convention as every other optional field in
+    // this codebase.
+    this.saveTasks(data.tasks ?? [])
   }
 
   getNotificationsEnabled(): boolean {
