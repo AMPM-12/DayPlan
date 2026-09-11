@@ -211,6 +211,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setTasksState(next)
   }, [])
 
+  // Credits newly-elapsed focus-session time onto a linked PlanTask.
+  // `deltaMs` is expected to already be the positive, not-yet-flushed
+  // amount (see each session-timer reducer below) — this never reads
+  // taskTimeFlushedMs itself, it only applies the increment. Re-reads
+  // tasks fresh from storage rather than trusting the closed-over `tasks`
+  // variable, mirroring persistToday's own re-read-before-mutate
+  // discipline, since this can run back-to-back with other task edits.
+  // Never touches estimatedMinutes.
+  const creditTaskTime = useCallback((taskId: string, deltaMs: number) => {
+    const minutesToAdd = Math.round(deltaMs / 60_000)
+    if (minutesToAdd <= 0) return
+    const latestTasks = planRepo.getTasks()
+    const idx = latestTasks.findIndex((t) => t.id === taskId)
+    if (idx === -1) return
+    const updated = latestTasks.map((t, i) =>
+      i === idx ? { ...t, timeSpentMinutes: t.timeSpentMinutes + minutesToAdd } : t,
+    )
+    planRepo.saveTasks(updated)
+    setTasksState(updated)
+  }, [])
+
   const addTask = useCallback(
     (title: string, estimatedMinutes: number) => {
       const now = new Date().toISOString()
@@ -526,13 +547,33 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   )
 
   const pauseSessionTimer = useCallback(() => {
+    let flush: { taskId: string; deltaMs: number } | undefined
     persistToday((latest) => {
       const timer = latest.activeSessionTimer
       if (!timer || timer.pausedRemainingMs !== undefined) return latest
       const remainingMs = Math.max(0, new Date(timer.targetEndAt).getTime() - Date.now())
-      return { ...latest, activeSessionTimer: { ...timer, pausedRemainingMs: remainingMs } }
+
+      const tasks = latest.dockets?.[timer.activityId] ?? []
+      const task = tasks.find((t) => t.id === timer.taskId)
+      let dockets = latest.dockets
+      if (task?.taskId) {
+        const currentElapsedMs = Math.max(0, task.plannedMinutes * 60_000 - remainingMs)
+        const delta = currentElapsedMs - (task.taskTimeFlushedMs ?? 0)
+        if (delta > 0) {
+          flush = { taskId: task.taskId, deltaMs: delta }
+          dockets = {
+            ...latest.dockets,
+            [timer.activityId]: tasks.map((t) =>
+              t.id === task.id ? { ...t, taskTimeFlushedMs: currentElapsedMs } : t,
+            ),
+          }
+        }
+      }
+
+      return { ...latest, dockets, activeSessionTimer: { ...timer, pausedRemainingMs: remainingMs } }
     })
-  }, [persistToday])
+    if (flush) creditTaskTime(flush.taskId, flush.deltaMs)
+  }, [persistToday, creditTaskTime])
 
   const resumeSessionTimer = useCallback(() => {
     persistToday((latest) => {
@@ -570,6 +611,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // approach — never a countdown that's decremented in place.
   const switchSessionTask = useCallback(
     (newTaskId: string) => {
+      let flush: { taskId: string; deltaMs: number } | undefined
       persistToday((latest) => {
         const timer = latest.activeSessionTimer
         if (!timer || timer.taskId === newTaskId) return latest
@@ -588,9 +630,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           currentTask.plannedMinutes * 60_000 - currentRemainingMs,
         )
 
-        const updatedTasks = tasks.map((t) =>
-          t.id === currentTask.id ? { ...t, elapsedMs: currentElapsedMs } : t,
-        )
+        let updatedCurrentTask = { ...currentTask, elapsedMs: currentElapsedMs }
+        if (currentTask.taskId) {
+          const delta = currentElapsedMs - (currentTask.taskTimeFlushedMs ?? 0)
+          if (delta > 0) {
+            flush = { taskId: currentTask.taskId, deltaMs: delta }
+            updatedCurrentTask = { ...updatedCurrentTask, taskTimeFlushedMs: currentElapsedMs }
+          }
+        }
+
+        const updatedTasks = tasks.map((t) => (t.id === currentTask.id ? updatedCurrentTask : t))
         const targetEndAt = new Date(now + remainingMsForTask(targetTask)).toISOString()
 
         return {
@@ -604,12 +653,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           },
         }
       })
+      if (flush) creditTaskTime(flush.taskId, flush.deltaMs)
     },
-    [persistToday],
+    [persistToday, creditTaskTime],
   )
 
   const completeSessionTask = useCallback(
     (status: DocketTaskStatus, actualMinutes?: number) => {
+      let flush: { taskId: string; deltaMs: number } | undefined
       persistToday((latest) => {
         const timer = latest.activeSessionTimer
         if (!timer) return latest
@@ -617,8 +668,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const task = tasks.find((t) => t.id === timer.taskId)
         if (!task) return latest
         const minutes = actualMinutes ?? task.plannedMinutes
+
+        let taskTimeFlushedMs = task.taskTimeFlushedMs
+        if (task.taskId) {
+          const currentElapsedMs = minutes * 60_000
+          const delta = currentElapsedMs - (task.taskTimeFlushedMs ?? 0)
+          if (delta > 0) {
+            flush = { taskId: task.taskId, deltaMs: delta }
+            taskTimeFlushedMs = currentElapsedMs
+          }
+        }
+
         const updatedTasks = tasks.map((t) =>
-          t.id === timer.taskId ? { ...t, status, actualMinutes: minutes, elapsedMs: undefined } : t,
+          t.id === timer.taskId
+            ? { ...t, status, actualMinutes: minutes, elapsedMs: undefined, taskTimeFlushedMs }
+            : t,
         )
         const currentIndex = tasks.findIndex((t) => t.id === timer.taskId)
         const next = updatedTasks.slice(currentIndex + 1).find((t) => t.status === 'planned')
@@ -641,16 +705,43 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const { activeSessionTimer: _timer, ...rest } = latest
         return { ...rest, dockets }
       })
+      if (flush) creditTaskTime(flush.taskId, flush.deltaMs)
     },
-    [persistToday],
+    [persistToday, creditTaskTime],
   )
 
   const endSessionEarly = useCallback(() => {
+    let flush: { taskId: string; deltaMs: number } | undefined
     persistToday((latest) => {
+      const timer = latest.activeSessionTimer
       const { activeSessionTimer: _timer, ...rest } = latest
-      return rest
+      if (!timer) return rest
+
+      const tasks = latest.dockets?.[timer.activityId] ?? []
+      const task = tasks.find((t) => t.id === timer.taskId)
+      if (!task?.taskId) return rest
+
+      const remainingMs =
+        timer.pausedRemainingMs !== undefined
+          ? timer.pausedRemainingMs
+          : Math.max(0, new Date(timer.targetEndAt).getTime() - Date.now())
+      const currentElapsedMs = Math.max(0, task.plannedMinutes * 60_000 - remainingMs)
+      const delta = currentElapsedMs - (task.taskTimeFlushedMs ?? 0)
+      if (delta <= 0) return rest
+
+      flush = { taskId: task.taskId, deltaMs: delta }
+      return {
+        ...rest,
+        dockets: {
+          ...latest.dockets,
+          [timer.activityId]: tasks.map((t) =>
+            t.id === task.id ? { ...t, taskTimeFlushedMs: currentElapsedMs } : t,
+          ),
+        },
+      }
     })
-  }, [persistToday])
+    if (flush) creditTaskTime(flush.taskId, flush.deltaMs)
+  }, [persistToday, creditTaskTime])
 
   const activeSessionTaskTitle = useMemo(() => {
     const timer = today.activeSessionTimer

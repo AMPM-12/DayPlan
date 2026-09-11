@@ -89,17 +89,20 @@ export interface DocketTask {
   elapsedMs?: number
   /**
    * Present only when this docket entry was added via "Add from Tasks"
-   * (references PlanTask.id) rather than typed as free text. Purely a
-   * structural link in this phase — completing/timing a linked entry
-   * still only ever touches THIS DocketTask's own fields (actualMinutes/
-   * elapsedMs/status), never the underlying PlanTask's timeSpentMinutes;
-   * that stays a manual edit in the Task List, same as any other task.
-   * Deleting this docket entry never touches the PlanTask either — they
-   * live in entirely separate stores (day-scoped dockets vs. the
-   * standalone dailyplan.tasks.v1 list) with no cascade in either
-   * direction.
+   * (references PlanTask.id) rather than typed as free text. Deleting this
+   * docket entry never touches the PlanTask — they live in entirely
+   * separate stores (day-scoped dockets vs. the standalone
+   * dailyplan.tasks.v1 list), linked only by this id.
    */
   taskId?: string
+  /**
+   * How much of this entry's elapsed time (in ms, same clock as elapsedMs)
+   * has already been credited to the linked PlanTask's timeSpentMinutes.
+   * Only meaningful when taskId is set. Lets each flush point (switch,
+   * pause, complete, end-session) credit just the delta since the last
+   * flush instead of re-crediting the same time twice.
+   */
+  taskTimeFlushedMs?: number
 }
 
 export interface SessionTimerState {
