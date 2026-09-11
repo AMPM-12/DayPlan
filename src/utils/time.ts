@@ -68,3 +68,11 @@ export function dateStringPlusMinutes(dateStr: string, minutesSinceMidnight: num
   const midnight = new Date(`${dateStr}T00:00:00`)
   return new Date(midnight.getTime() + minutesSinceMidnight * 60_000)
 }
+
+/** "4:32" — a live countdown from a millisecond duration, e.g. targetEndAt minus now. */
+export function formatCountdown(ms: number): string {
+  const totalSec = Math.max(0, Math.round(ms / 1000))
+  const m = Math.floor(totalSec / 60)
+  const s = totalSec % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}

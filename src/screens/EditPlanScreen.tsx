@@ -12,6 +12,7 @@ import {
 import { disablePush } from '../utils/push'
 import { Sheet } from '../components/Sheet'
 import { ActivityForm } from '../components/ActivityForm'
+import { AwakenSetupForm } from '../components/AwakenSetupForm'
 import { ActivityList } from '../components/ActivityList'
 
 const WEEKDAYS: [Weekday, string][] = [
@@ -47,7 +48,7 @@ export function EditPlanScreen() {
   const [activeProfileId, setActiveProfileId] = useState(defaultProfileId)
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? profiles[0]
 
-  const [editing, setEditing] = useState<Activity | 'new' | null>(null)
+  const [editing, setEditing] = useState<Activity | 'new' | 'new-awaken' | null>(null)
   const [managingProfiles, setManagingProfiles] = useState(false)
   const [mappingOpen, setMappingOpen] = useState(false)
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -171,14 +172,24 @@ export function EditPlanScreen() {
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Your Plan</h1>
           <p className="text-sm text-slate-400 dark:text-slate-500">Repeats every day</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditing('new')}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-xl font-semibold text-white"
-          aria-label="Add activity"
-        >
-          +
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setEditing('new-awaken')}
+            className="flex h-10 items-center justify-center rounded-full bg-slate-100 px-3.5 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+            aria-label="Add AWAKEN"
+          >
+            ☀️ AWAKEN
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditing('new')}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-xl font-semibold text-white"
+            aria-label="Add activity"
+          >
+            +
+          </button>
+        </div>
       </header>
 
       <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1">
@@ -239,29 +250,60 @@ export function EditPlanScreen() {
         <ActivityList activities={sorted} onEdit={setEditing} onReorder={handleReorder} />
       )}
 
-      <Sheet
-        open={!!editing}
-        onClose={close}
-        title={editing === 'new' ? 'Add activity' : 'Edit activity'}
-      >
-        <ActivityForm
-          initial={editing !== 'new' && editing ? editing : undefined}
-          onCancel={close}
-          onSave={(activity) => {
-            if (editing === 'new') addActivity(activeProfileId, activity)
-            else updateActivity(activeProfileId, activity)
-            close()
-          }}
-          onDelete={
-            editing !== 'new' && editing
-              ? () => {
-                  deleteActivity(activeProfileId, editing.id)
+      {(() => {
+        const isNewAwaken = editing === 'new-awaken'
+        const existing = editing && editing !== 'new' && editing !== 'new-awaken' ? editing : undefined
+        const isExistingAwaken = !!existing?.isAwaken
+        const isAwakenForm = isNewAwaken || isExistingAwaken
+        const title = isNewAwaken
+          ? 'Add AWAKEN'
+          : isExistingAwaken
+            ? 'Edit AWAKEN'
+            : editing === 'new'
+              ? 'Add activity'
+              : 'Edit activity'
+        return (
+          <Sheet open={!!editing} onClose={close} title={title}>
+            {isAwakenForm ? (
+              <AwakenSetupForm
+                initial={existing}
+                onCancel={close}
+                onSave={(activity) => {
+                  if (existing) updateActivity(activeProfileId, activity)
+                  else addActivity(activeProfileId, activity)
                   close()
+                }}
+                onDelete={
+                  existing
+                    ? () => {
+                        deleteActivity(activeProfileId, existing.id)
+                        close()
+                      }
+                    : undefined
                 }
-              : undefined
-          }
-        />
-      </Sheet>
+              />
+            ) : (
+              <ActivityForm
+                initial={existing}
+                onCancel={close}
+                onSave={(activity) => {
+                  if (editing === 'new') addActivity(activeProfileId, activity)
+                  else updateActivity(activeProfileId, activity)
+                  close()
+                }}
+                onDelete={
+                  existing
+                    ? () => {
+                        deleteActivity(activeProfileId, existing.id)
+                        close()
+                      }
+                    : undefined
+                }
+              />
+            )}
+          </Sheet>
+        )
+      })()}
 
       <Sheet open={managingProfiles} onClose={() => setManagingProfiles(false)} title="Profiles">
         <div className="space-y-2">

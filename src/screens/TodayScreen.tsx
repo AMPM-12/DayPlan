@@ -62,6 +62,12 @@ export function TodayScreen() {
   const isOverridden = !!today.profileOverride && today.profileOverride !== usualProfileId
 
   function openActions(item: ScheduleItem) {
+    // AWAKEN blocks have their own dedicated run screen — jump straight
+    // into it instead of the regular block's actions sheet.
+    if (item.activity.isAwaken) {
+      navigate('/awaken', { state: { awakenActivityId: item.activity.id } })
+      return
+    }
     // Focus-session blocks already have their own dedicated workflow
     // (docket, timer, log) — jump straight into it instead of the regular
     // block's actions sheet.
@@ -239,7 +245,11 @@ export function TodayScreen() {
         title={optionsFor?.activity.title ?? ''}
       >
         {optionsFor &&
-          (optionsForIsRunning ? (
+          (optionsFor.activity.isAwaken ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              This is an AWAKEN block — rename or reconfigure its practices from the Plan tab.
+            </p>
+          ) : optionsForIsRunning ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">
               This session is currently running — pause or finish it before changing its type.
             </p>

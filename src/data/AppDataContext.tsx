@@ -26,6 +26,7 @@ import { resolveActivities } from '../utils/profiles'
 import { computeSchedule } from '../utils/schedule'
 import { useActivityNotifications } from '../hooks/useActivityNotifications'
 import { useSessionTimerNotification } from '../hooks/useSessionTimerNotification'
+import { useAwakenAutoAdvance } from '../hooks/useAwakenAutoAdvance'
 import { usePushTransitionsSync } from '../hooks/usePushTransitionsSync'
 
 // A task's remaining time honors any banked elapsedMs from a prior period
@@ -89,7 +90,8 @@ interface AppDataValue {
   resumeSessionTimer: () => void
   extendSessionTask: (minutes: number) => void
   switchSessionTask: (taskId: string) => void
-  completeSessionTask: (status: DocketTaskStatus, actualMinutes: number) => void
+  /** actualMinutes defaults to the task's plannedMinutes when omitted (e.g. an unattended AWAKEN practice completing on its own). */
+  completeSessionTask: (status: DocketTaskStatus, actualMinutes?: number) => void
   endSessionEarly: () => void
 }
 
@@ -529,13 +531,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   )
 
   const completeSessionTask = useCallback(
-    (status: DocketTaskStatus, actualMinutes: number) => {
+    (status: DocketTaskStatus, actualMinutes?: number) => {
       persistToday((latest) => {
         const timer = latest.activeSessionTimer
         if (!timer) return latest
         const tasks = latest.dockets?.[timer.activityId] ?? []
+        const task = tasks.find((t) => t.id === timer.taskId)
+        if (!task) return latest
+        const minutes = actualMinutes ?? task.plannedMinutes
         const updatedTasks = tasks.map((t) =>
-          t.id === timer.taskId ? { ...t, status, actualMinutes, elapsedMs: undefined } : t,
+          t.id === timer.taskId ? { ...t, status, actualMinutes: minutes, elapsedMs: undefined } : t,
         )
         const currentIndex = tasks.findIndex((t) => t.id === timer.taskId)
         const next = updatedTasks.slice(currentIndex + 1).find((t) => t.status === 'planned')
@@ -576,6 +581,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [today])
 
   useSessionTimerNotification(today.activeSessionTimer, activeSessionTaskTitle, notificationsEnabled)
+
+  // Only AWAKEN practices auto-advance unattended — a regular focus-session
+  // task still waits for the user to confirm actual minutes spent.
+  const activeTimer = today.activeSessionTimer
+  const isAwakenTimerRunning =
+    !!activeTimer &&
+    activeTimer.pausedRemainingMs === undefined &&
+    !!todayActivities.find((a) => a.id === activeTimer.activityId)?.isAwaken
+  useAwakenAutoAdvance(isAwakenTimerRunning ? activeTimer!.targetEndAt : undefined, () => {
+    completeSessionTask('done')
+  })
 
   const exportData = useCallback(() => planRepo.exportData(), [])
 

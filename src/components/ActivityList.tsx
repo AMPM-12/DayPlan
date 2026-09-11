@@ -189,6 +189,11 @@ export function ActivityList({
                     Flexible
                   </span>
                 )}
+                {activity.isAwaken && (
+                  <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                    ☀️ AWAKEN
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400 dark:text-slate-500">
                 {formatDuration(activity.durationMin)}

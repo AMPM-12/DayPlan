@@ -30,6 +30,16 @@ export interface Activity {
   flexOptions?: FlexOption[]
   /** Marks this block as a focus session: gains a docket and Productivity/Discipline scores. */
   isFocusSession?: boolean
+  /** Marks this block as an AWAKEN block: a sequence of timed morning practices. */
+  isAwaken?: boolean
+  /** Practice templates for an AWAKEN block, in order. Falls back to the default six when absent. */
+  awakenPractices?: AwakenPracticeTemplate[]
+}
+
+export interface AwakenPracticeTemplate {
+  id: string
+  title: string
+  enabled: boolean
 }
 
 export interface ActivityLog {

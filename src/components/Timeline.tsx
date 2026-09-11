@@ -51,6 +51,11 @@ function TimelineRow({
                 item.completed ? 'line-through decoration-slate-400' : ''
               }`}
             >
+              {item.activity.isAwaken && (
+                <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                  ☀️ AWAKEN
+                </span>
+              )}
               {item.activity.isFocusSession && (
                 <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
                   🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}

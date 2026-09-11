@@ -61,6 +61,11 @@ export function NowCard({
         </button>
       </div>
 
+      {item.activity.isAwaken && (
+        <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          ☀️ AWAKEN
+        </p>
+      )}
       {item.activity.isFocusSession && (
         <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
           🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}

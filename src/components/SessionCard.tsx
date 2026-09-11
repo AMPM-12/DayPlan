@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Activity, ActivityLog, DocketTask, DocketTaskStatus, SessionTimerState } from '../types'
-import { formatClock, formatDuration, parseTimeToMinutes } from '../utils/time'
+import { formatClock, formatCountdown, formatDuration, parseTimeToMinutes } from '../utils/time'
 import { DocketEditor } from './DocketEditor'
 import { Sheet } from './Sheet'
 import { LogForm } from './LogForm'
@@ -9,13 +9,6 @@ const STATUS_ICON: Record<DocketTaskStatus, string> = {
   done: '✓',
   skipped: '⤫',
   planned: '',
-}
-
-function formatCountdown(ms: number): string {
-  const totalSec = Math.max(0, Math.round(ms / 1000))
-  const m = Math.floor(totalSec / 60)
-  const s = totalSec % 60
-  return `${m}:${String(s).padStart(2, '0')}`
 }
 
 export function SessionCard({
