@@ -216,6 +216,14 @@ export function DocketEditor({
 
   function handleRowPointerDown(e: React.PointerEvent<HTMLDivElement>, id: string) {
     if (!allowEdit || editingTaskId) return
+    // Touch only ever drags via the handle below (already touch-action:
+    // none and committed instantly, with no delay for a competing native
+    // scroll gesture to win). The row-wide long-press here waits 350ms
+    // before doing anything, which on a real touchscreen — especially once
+    // the list has already been scrolled — loses that race to the browser's
+    // own scroll-gesture arbitration and gets silently cancelled before the
+    // timer ever fires. Mouse/pen have no such race, so they keep it.
+    if (e.pointerType === 'touch') return
     pressStart.current = { x: e.clientX, y: e.clientY, id }
     longPressTimer.current = setTimeout(() => {
       const p = pressStart.current
