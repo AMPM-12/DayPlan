@@ -137,7 +137,9 @@ export function DocketEditor({
         taskId: planTask.id,
       },
     ])
-    setPickerOpen(false)
+    // Deliberately left open — the "+ Add from Tasks" / "Close" toggle below
+    // is the explicit dismiss control, so several tasks can be added in a
+    // row without reopening the picker each time.
   }
 
   function removeTask(id: string) {
@@ -346,10 +348,13 @@ export function DocketEditor({
   const draggedRect = drag ? drag.rects.find((r) => r.id === drag.id) : undefined
   const draggedContainerTop = scrollContainerRef.current?.getBoundingClientRect().top ?? 0
   const editingTask = editingTaskId ? tasks.find((t) => t.id === editingTaskId) : undefined
-  // "Add from Tasks" only ever offers open work — same reasoning as the
-  // Task List showing a "Clear completed" action instead of ever letting
-  // you plan a session around something already finished.
-  const incompletePlanTasks = planTasks.filter((t) => !t.completed)
+  // "Add from Tasks" only ever offers open work not already in this docket
+  // — the open-work half mirrors the Task List's own "Clear completed"
+  // reasoning (never plan a session around something already finished);
+  // the already-added half matters now that the picker stays open after
+  // each pick, so the same task can't be added twice by mistake.
+  const linkedTaskIds = new Set(tasks.map((t) => t.taskId).filter((id): id is string => !!id))
+  const incompletePlanTasks = planTasks.filter((t) => !t.completed && !linkedTaskIds.has(t.id))
 
   return (
     <div className="space-y-2">
