@@ -4,9 +4,17 @@ import { formatDuration } from '../utils/time'
 
 const LONG_PRESS_MS = 350
 const MOVE_CANCEL_PX = 8
+// Auto-scroll the page while dragging near the top/bottom edge of the
+// viewport — without this, any row currently off-screen (a task list long
+// enough to require scrolling) is an unreachable drop target, since
+// nothing else scrolls the list for you mid-drag. Mirrors ActivityList's
+// fix — same context (a plain scrolling page), so the same approach applies directly.
+const AUTO_SCROLL_EDGE_PX = 72
+const AUTO_SCROLL_MAX_PX_PER_FRAME = 18
 
 interface Rect {
   id: string
+  /** Document-relative (viewport top + scrollY at snapshot time), so it stays valid across any scrolling — including the auto-scroll below — that happens during the drag. */
   top: number
   left: number
   width: number
@@ -18,13 +26,16 @@ interface DragState {
   startY: number
   currentY: number
   rects: Rect[]
+  /** window.scrollY at drag start — needed to convert the dragged row's document-relative rect back to a viewport-relative position for the floating ghost. */
+  startScrollY: number
 }
 
-function computeTargetIndex(rects: Rect[], draggedId: string, pointerY: number): number {
+/** `pointerDocumentY` must be document-relative (viewport Y + window.scrollY), matching `rects[].top`. */
+function computeTargetIndex(rects: Rect[], draggedId: string, pointerDocumentY: number): number {
   const others = rects.filter((r) => r.id !== draggedId)
   let index = 0
   for (const r of others) {
-    if (pointerY > r.top + r.height / 2) index++
+    if (pointerDocumentY > r.top + r.height / 2) index++
   }
   return index
 }
@@ -96,16 +107,23 @@ export function TaskList({
   }
 
   function snapshotRects(): Rect[] {
+    const scrollY = window.scrollY
     return tasks.map((t) => {
       const el = rowRefs.current.get(t.id)
       const r = el?.getBoundingClientRect()
-      return { id: t.id, top: r?.top ?? 0, left: r?.left ?? 0, width: r?.width ?? 0, height: r?.height ?? 0 }
+      return {
+        id: t.id,
+        top: (r?.top ?? 0) + scrollY,
+        left: r?.left ?? 0,
+        width: r?.width ?? 0,
+        height: r?.height ?? 0,
+      }
     })
   }
 
   function beginDrag(id: string, clientY: number) {
     suppressClick.current = true
-    setDrag({ id, startY: clientY, currentY: clientY, rects: snapshotRects() })
+    setDrag({ id, startY: clientY, currentY: clientY, rects: snapshotRects(), startScrollY: window.scrollY })
   }
 
   function clearLongPress() {
@@ -163,7 +181,7 @@ export function TaskList({
     function onUp(e: PointerEvent) {
       setDrag((d) => {
         if (!d) return null
-        const targetIndex = computeTargetIndex(d.rects, d.id, e.clientY)
+        const targetIndex = computeTargetIndex(d.rects, d.id, e.clientY + window.scrollY)
         const current = tasksRef.current
         const fromIndex = current.findIndex((t) => t.id === d.id)
         const reordered = [...current]
@@ -197,7 +215,45 @@ export function TaskList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drag?.id])
 
-  const targetIndex = drag ? computeTargetIndex(drag.rects, drag.id, drag.currentY) : null
+  // Runs alongside the listeners above for the same drag: on every frame,
+  // scroll the page when the pointer sits near the top/bottom edge of the
+  // viewport, faster the closer it is to the edge. Forces a re-render each
+  // scrolling frame (an otherwise-unused field bump) so the target-index
+  // indicator stays in sync with the list moving underneath the pointer —
+  // window.scrollBy alone doesn't trigger React to recompute it.
+  useEffect(() => {
+    if (!drag) return
+    let rafId: number
+
+    function tick() {
+      setDrag((d) => {
+        if (!d) return d
+        const vh = window.innerHeight
+        let delta = 0
+        if (d.currentY < AUTO_SCROLL_EDGE_PX) {
+          delta = -Math.ceil(((AUTO_SCROLL_EDGE_PX - d.currentY) / AUTO_SCROLL_EDGE_PX) * AUTO_SCROLL_MAX_PX_PER_FRAME)
+        } else if (d.currentY > vh - AUTO_SCROLL_EDGE_PX) {
+          delta = Math.ceil(
+            ((d.currentY - (vh - AUTO_SCROLL_EDGE_PX)) / AUTO_SCROLL_EDGE_PX) * AUTO_SCROLL_MAX_PX_PER_FRAME,
+          )
+        }
+        if (delta === 0) return d
+        const before = window.scrollY
+        window.scrollBy(0, delta)
+        // Reached the top/bottom of the page — nothing actually moved, so
+        // don't force a render (computeTargetIndex's result can't have changed).
+        if (window.scrollY === before) return d
+        return { ...d }
+      })
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drag?.id])
+
+  const targetIndex = drag ? computeTargetIndex(drag.rects, drag.id, drag.currentY + window.scrollY) : null
   const others = drag ? tasks.filter((t) => t.id !== drag.id) : tasks
   const draggedTask = drag ? tasks.find((t) => t.id === drag.id) : undefined
   const draggedRect = drag ? drag.rects.find((r) => r.id === drag.id) : undefined
@@ -364,7 +420,10 @@ export function TaskList({
           <div
             style={{
               position: 'fixed',
-              top: draggedRect.top + (drag.currentY - drag.startY),
+              // draggedRect.top is document-relative; convert back to
+              // viewport-relative (via the scroll position at drag start)
+              // before adding the pointer's own movement delta.
+              top: draggedRect.top - drag.startScrollY + (drag.currentY - drag.startY),
               left: draggedRect.left,
               width: draggedRect.width,
               zIndex: 50,

@@ -6,9 +6,20 @@ import { remainingMinutesForPlanTask, resolveDocketTaskTitle } from '../utils/fo
 
 const LONG_PRESS_MS = 350
 const MOVE_CANCEL_PX = 8
+// Auto-scroll while dragging near the top/bottom edge of whatever scrolls
+// this list — without this, any row currently off-screen (a docket long
+// enough to require scrolling) is an unreachable drop target, since
+// nothing else scrolls the list for you mid-drag. Mirrors ActivityList's
+// fix, generalized: DocketEditor renders both directly on a page (which
+// scrolls via the window, e.g. inside FocusSessionsScreen's SessionCard)
+// and inside a Sheet (which scrolls via its own capped overflow-y-auto
+// div, e.g. the "Edit upcoming tasks" flow) — see findScrollContainer.
+const AUTO_SCROLL_EDGE_PX = 72
+const AUTO_SCROLL_MAX_PX_PER_FRAME = 18
 
 interface Rect {
   id: string
+  /** Relative to the drag's scroll container's own scrollable content (viewport top - container's viewport top + container's scrollTop, all at snapshot time) — stays valid across any scrolling, including the auto-scroll below, that happens during the drag. */
   top: number
   left: number
   width: number
@@ -20,15 +31,50 @@ interface DragState {
   startY: number
   currentY: number
   rects: Rect[]
+  /** The container's scrollTop at drag start — needed to convert the dragged row's container-relative rect back to a viewport-relative position for the floating ghost. */
+  startScrollTop: number
 }
 
-function computeTargetIndex(rects: Rect[], draggedId: string, pointerY: number): number {
+/** `pointerContainerY` must be in the same container-relative space as `rects[].top` — see `toContainerSpace`. */
+function computeTargetIndex(rects: Rect[], draggedId: string, pointerContainerY: number): number {
   const others = rects.filter((r) => r.id !== draggedId)
   let index = 0
   for (const r of others) {
-    if (pointerY > r.top + r.height / 2) index++
+    if (pointerContainerY > r.top + r.height / 2) index++
   }
   return index
+}
+
+/**
+ * The nearest scrollable ancestor of `el` — e.g. a Sheet's own
+ * overflow-y-auto div — or the page's own scrolling element when there
+ * isn't one (DocketEditor renders in both contexts; this makes the same
+ * drag code work for either without knowing which it's in).
+ */
+function findScrollContainer(el: Element | null): Element {
+  let node = el?.parentElement ?? null
+  while (node && node !== document.body) {
+    const style = getComputedStyle(node)
+    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+      return node
+    }
+    node = node.parentElement
+  }
+  return document.scrollingElement ?? document.documentElement
+}
+
+/** Converts a viewport-relative Y (e.g. from a pointer event) into `container`'s content-relative space, matching how `snapshotRects` measures rows. */
+function toContainerSpace(container: Element, clientY: number): number {
+  return clientY - container.getBoundingClientRect().top + container.scrollTop
+}
+
+/** The container's own on-screen top/bottom edges — where auto-scroll's edge zones live. A plain page (scrolling via the document) uses the viewport itself, since the scrolling element's own rect isn't a reliable stand-in for it across browsers. */
+function containerViewportBounds(container: Element): { top: number; bottom: number } {
+  if (container === document.documentElement || container === document.body) {
+    return { top: 0, bottom: window.innerHeight }
+  }
+  const r = container.getBoundingClientRect()
+  return { top: r.top, bottom: r.bottom }
 }
 
 export function DocketEditor({
@@ -63,6 +109,10 @@ export function DocketEditor({
   const suppressClick = useRef(false)
   const tasksRef = useRef(tasks)
   tasksRef.current = tasks
+  // Resolved once per drag (in beginDrag) from whichever row is on hand —
+  // stable for the drag's duration since neither a Sheet nor the page
+  // itself moves out from under its own scroll.
+  const scrollContainerRef = useRef<Element | null>(null)
 
   function addTask() {
     const t = title.trim()
@@ -124,16 +174,34 @@ export function DocketEditor({
   }
 
   function snapshotRects(): Rect[] {
+    const anyRow = rowRefs.current.values().next().value ?? null
+    const container = findScrollContainer(anyRow)
+    scrollContainerRef.current = container
+    const containerTop = container.getBoundingClientRect().top
+    const scrollTop = container.scrollTop
     return tasks.map((t) => {
       const el = rowRefs.current.get(t.id)
       const r = el?.getBoundingClientRect()
-      return { id: t.id, top: r?.top ?? 0, left: r?.left ?? 0, width: r?.width ?? 0, height: r?.height ?? 0 }
+      return {
+        id: t.id,
+        top: r ? r.top - containerTop + scrollTop : 0,
+        left: r?.left ?? 0,
+        width: r?.width ?? 0,
+        height: r?.height ?? 0,
+      }
     })
   }
 
   function beginDrag(id: string, clientY: number) {
     suppressClick.current = true
-    setDrag({ id, startY: clientY, currentY: clientY, rects: snapshotRects() })
+    const rects = snapshotRects()
+    setDrag({
+      id,
+      startY: clientY,
+      currentY: clientY,
+      rects,
+      startScrollTop: scrollContainerRef.current?.scrollTop ?? 0,
+    })
   }
 
   function clearLongPress() {
@@ -193,7 +261,9 @@ export function DocketEditor({
     function onUp(e: PointerEvent) {
       setDrag((d) => {
         if (!d) return null
-        const targetIndex = computeTargetIndex(d.rects, d.id, e.clientY)
+        const container = scrollContainerRef.current
+        const pointerY = container ? toContainerSpace(container, e.clientY) : e.clientY
+        const targetIndex = computeTargetIndex(d.rects, d.id, pointerY)
         const current = tasksRef.current
         const fromIndex = current.findIndex((t) => t.id === d.id)
         const reordered = [...current]
@@ -227,10 +297,54 @@ export function DocketEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drag?.id])
 
-  const targetIndex = drag ? computeTargetIndex(drag.rects, drag.id, drag.currentY) : null
+  // Runs alongside the listeners above for the same drag: on every frame,
+  // scroll the container when the pointer sits near its top/bottom edge,
+  // faster the closer it is to the edge. Forces a re-render each scrolling
+  // frame (an otherwise-unused field bump) so the target-index indicator
+  // stays in sync with the list moving underneath the pointer — scrollBy
+  // alone doesn't trigger React to recompute it.
+  useEffect(() => {
+    if (!drag) return
+    const container = scrollContainerRef.current
+    if (!container) return
+    let rafId: number
+
+    function tick() {
+      setDrag((d) => {
+        if (!d) return d
+        const { top, bottom } = containerViewportBounds(container!)
+        let delta = 0
+        if (d.currentY < top + AUTO_SCROLL_EDGE_PX) {
+          delta = -Math.ceil(((top + AUTO_SCROLL_EDGE_PX - d.currentY) / AUTO_SCROLL_EDGE_PX) * AUTO_SCROLL_MAX_PX_PER_FRAME)
+        } else if (d.currentY > bottom - AUTO_SCROLL_EDGE_PX) {
+          delta = Math.ceil(
+            ((d.currentY - (bottom - AUTO_SCROLL_EDGE_PX)) / AUTO_SCROLL_EDGE_PX) * AUTO_SCROLL_MAX_PX_PER_FRAME,
+          )
+        }
+        if (delta === 0) return d
+        const before = container!.scrollTop
+        container!.scrollBy(0, delta)
+        // Reached the top/bottom of the container — nothing actually
+        // moved, so don't force a render (computeTargetIndex can't have changed).
+        if (container!.scrollTop === before) return d
+        return { ...d }
+      })
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drag?.id])
+
+  const targetIndex =
+    drag && scrollContainerRef.current
+      ? computeTargetIndex(drag.rects, drag.id, toContainerSpace(scrollContainerRef.current, drag.currentY))
+      : null
   const others = drag ? tasks.filter((t) => t.id !== drag.id) : tasks
   const draggedTask = drag ? tasks.find((t) => t.id === drag.id) : undefined
   const draggedRect = drag ? drag.rects.find((r) => r.id === drag.id) : undefined
+  const draggedContainerTop = scrollContainerRef.current?.getBoundingClientRect().top ?? 0
   const editingTask = editingTaskId ? tasks.find((t) => t.id === editingTaskId) : undefined
   // "Add from Tasks" only ever offers open work — same reasoning as the
   // Task List showing a "Clear completed" action instead of ever letting
@@ -356,7 +470,11 @@ export function DocketEditor({
           <div
             style={{
               position: 'fixed',
-              top: draggedRect.top + (drag.currentY - drag.startY),
+              // draggedRect.top is container-relative; convert back to
+              // viewport-relative (via the container's scroll position at
+              // drag start, plus its own on-screen offset) before adding
+              // the pointer's own movement delta.
+              top: draggedRect.top - drag.startScrollTop + draggedContainerTop + (drag.currentY - drag.startY),
               left: draggedRect.left,
               width: draggedRect.width,
               zIndex: 50,
