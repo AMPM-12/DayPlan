@@ -1,10 +1,33 @@
+import { execSync } from 'node:child_process'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vite'
 
+// Netlify sets COMMIT_REF to the exact commit being built — prefer it over
+// a local `git rev-parse` since it's guaranteed to match what's actually
+// deployed (a local checkout could be mid-rebase, detached, etc.). Falls
+// back to git for local dev builds, and to "unknown" if neither is
+// available (e.g. a shallow clone with no .git).
+function resolveBuildCommit(): string {
+  const fromEnv = process.env.COMMIT_REF
+  if (fromEnv) return fromEnv.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
+const BUILD_COMMIT = resolveBuildCommit()
+const BUILD_TIME = new Date().toISOString()
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __BUILD_COMMIT__: JSON.stringify(BUILD_COMMIT),
+    __BUILD_TIME__: JSON.stringify(BUILD_TIME),
+  },
   plugins: [
     react(),
     tailwindcss(),

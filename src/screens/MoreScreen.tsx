@@ -31,6 +31,13 @@ export function MoreScreen() {
           </Link>
         ))}
       </div>
+
+      {/* Permanent, deliberately unobtrusive — lets you positively confirm
+          which build is actually running (PWA/service-worker caching means
+          "I reopened the app" never guarantees a fresh bundle loaded). */}
+      <p className="mt-8 text-center text-[10px] text-slate-300 dark:text-slate-600">
+        Build {__BUILD_COMMIT__} · {new Date(__BUILD_TIME__).toLocaleString()}
+      </p>
     </div>
   )
 }
