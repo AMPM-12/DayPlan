@@ -9,7 +9,6 @@ import { AwakenScreen } from './screens/AwakenScreen'
 import { ReportScreen } from './screens/ReportScreen'
 import { MoreScreen } from './screens/MoreScreen'
 import { BottomNav } from './components/BottomNav'
-import { DragDebugOverlay } from './components/DragDebugOverlay'
 
 function Shell() {
   const { theme } = useAppData()
@@ -35,7 +34,6 @@ function Shell() {
           <BottomNav />
         </div>
       )}
-      <DragDebugOverlay />
     </div>
   )
 }

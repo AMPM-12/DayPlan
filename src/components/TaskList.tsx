@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PlanTask } from '../types'
 import { formatDuration } from '../utils/time'
-import { logDragDebug } from '../utils/dragDebug' // TEMPORARY — see src/utils/dragDebug.ts
 
 const LONG_PRESS_MS = 350
 const MOVE_CANCEL_PX = 8
@@ -109,11 +108,9 @@ export function TaskList({
 
   function snapshotRects(): Rect[] {
     const scrollY = window.scrollY
-    const missingRefs: string[] = []
-    const rects = tasks.map((t) => {
+    return tasks.map((t) => {
       const el = rowRefs.current.get(t.id)
       const r = el?.getBoundingClientRect()
-      if (!el) missingRefs.push(t.id.slice(0, 8))
       return {
         id: t.id,
         top: (r?.top ?? 0) + scrollY,
@@ -122,14 +119,9 @@ export function TaskList({
         height: r?.height ?? 0,
       }
     })
-    logDragDebug(
-      `task/snapshotRects rows=${rects.length} missingRefs=${missingRefs.length ? missingRefs.join(',') : 'none'} scrollY=${Math.round(scrollY)}`,
-    )
-    return rects
   }
 
   function beginDrag(id: string, clientY: number) {
-    logDragDebug(`task/beginDrag id=${id.slice(0, 8)} clientY=${Math.round(clientY)} scrollY=${Math.round(window.scrollY)}`)
     suppressClick.current = true
     setDrag({ id, startY: clientY, currentY: clientY, rects: snapshotRects(), startScrollY: window.scrollY })
   }
@@ -143,20 +135,6 @@ export function TaskList({
   }
 
   function handleRowPointerDown(e: React.PointerEvent<HTMLDivElement>, id: string) {
-    logDragDebug(`task/row.onPointerDown id=${id.slice(0, 8)} type=${e.pointerType} clientY=${Math.round(e.clientY)}`)
-    // HYPOTHESIS FIX, deliberately reproduced — do not remove without
-    // re-testing on a real touchscreen. Touch drag-start worked reliably at
-    // every list length while temporary debug logging sat at the top of
-    // this handler; it broke again at the same "screenful" threshold the
-    // moment that logging-only code was removed (confirmed via diff that
-    // nothing else changed — no drag/scroll logic was touched). The one
-    // thing that logging had in common with this line is a small amount of
-    // synchronous work executed before anything else runs. This forces a
-    // layout read (result discarded) to reproduce that side effect on
-    // purpose: if it holds up, the native touch/scroll gesture arbitration
-    // is apparently sensitive to whether a layout flush happens
-    // synchronously at pointerdown, not to anything about our drag logic.
-    e.currentTarget.getBoundingClientRect()
     if (editingTaskId) return
     // Touch only ever drags via the handle below (already touch-action:
     // none and committed instantly, with no delay for a competing native
@@ -170,7 +148,6 @@ export function TaskList({
     longPressTimer.current = setTimeout(() => {
       const p = pressStart.current
       if (!p) return
-      logDragDebug(`task/row.longPressTimer fired id=${id.slice(0, 8)}`)
       beginDrag(p.id, p.y)
     }, LONG_PRESS_MS)
   }
@@ -179,14 +156,10 @@ export function TaskList({
     if (drag || !pressStart.current) return
     const dx = e.clientX - pressStart.current.x
     const dy = e.clientY - pressStart.current.y
-    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) {
-      logDragDebug(`task/row.onPointerMove CANCELLED longPress dx=${Math.round(dx)} dy=${Math.round(dy)}`)
-      clearLongPress()
-    }
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) clearLongPress()
   }
 
-  function handleRowPointerUpOrCancel(e: React.PointerEvent<HTMLDivElement>) {
-    logDragDebug(`task/row.${e.type} id=${pressStart.current?.id?.slice(0, 8) ?? '—'}`)
+  function handleRowPointerUpOrCancel() {
     clearLongPress()
   }
 
@@ -199,9 +172,6 @@ export function TaskList({
   }
 
   function handleHandlePointerDown(e: React.PointerEvent<HTMLButtonElement>, id: string) {
-    logDragDebug(`task/handle.onPointerDown id=${id.slice(0, 8)} type=${e.pointerType} clientY=${Math.round(e.clientY)} scrollY=${Math.round(window.scrollY)}`)
-    // HYPOTHESIS FIX — see the matching comment in handleRowPointerDown above.
-    e.currentTarget.getBoundingClientRect()
     e.preventDefault()
     e.stopPropagation()
     beginDrag(id, e.clientY)
@@ -384,19 +354,12 @@ export function TaskList({
                     if (el) rowRefs.current.set(task.id, el)
                     else rowRefs.current.delete(task.id)
                   }}
-                  data-drag-role="row"
-                  data-drag-list="task"
-                  data-drag-index={tasks.findIndex((t) => t.id === task.id)}
-                  data-drag-id={task.id}
                   onPointerDown={(e) => handleRowPointerDown(e, task.id)}
                   onPointerMove={handleRowPointerMove}
                   onPointerUp={handleRowPointerUpOrCancel}
                   onPointerCancel={handleRowPointerUpOrCancel}
                   onClick={() => handleRowClick(task)}
-                  // will-change-transform: promotes each row to its own
-                  // compositor layer up front — see the "touch dead zone"
-                  // theory in commit history (unconfirmed on-device).
-                  className="flex cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 will-change-transform dark:bg-slate-800/40 dark:ring-white/5"
+                  className="flex cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
                 >
                   <button
                     type="button"
@@ -446,13 +409,9 @@ export function TaskList({
                   <button
                     type="button"
                     aria-label="Drag to reorder"
-                    data-drag-role="handle"
-                    data-drag-list="task"
-                    data-drag-index={tasks.findIndex((t) => t.id === task.id)}
-                    data-drag-id={task.id}
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => handleHandlePointerDown(e, task.id)}
-                    className="shrink-0 touch-none rounded-lg p-2 text-slate-300 will-change-transform dark:text-slate-600"
+                    className="shrink-0 touch-none rounded-lg p-2 text-slate-300 dark:text-slate-600"
                   >
                     ⠿
                   </button>
