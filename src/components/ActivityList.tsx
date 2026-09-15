@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { Activity } from '../types'
 import { formatClock, formatDuration, parseTimeToMinutes } from '../utils/time'
 import { CategoryDot } from './CategoryTag'
-import { logDragDebug } from '../utils/dragDebug' // TEMPORARY — see src/utils/dragDebug.ts
 
 const LONG_PRESS_MS = 350
 const MOVE_CANCEL_PX = 8
@@ -60,11 +59,9 @@ export function ActivityList({
 
   function snapshotRects(): Rect[] {
     const scrollY = window.scrollY
-    const missingRefs: string[] = []
-    const rects = activities.map((a) => {
+    return activities.map((a) => {
       const el = rowRefs.current.get(a.id)
       const r = el?.getBoundingClientRect()
-      if (!el) missingRefs.push(a.id.slice(0, 8))
       return {
         id: a.id,
         top: (r?.top ?? 0) + scrollY,
@@ -73,14 +70,9 @@ export function ActivityList({
         height: r?.height ?? 0,
       }
     })
-    logDragDebug(
-      `activity/snapshotRects rows=${rects.length} missingRefs=${missingRefs.length ? missingRefs.join(',') : 'none'} scrollY=${Math.round(scrollY)}`,
-    )
-    return rects
   }
 
   function beginDrag(id: string, clientY: number) {
-    logDragDebug(`activity/beginDrag id=${id.slice(0, 8)} clientY=${Math.round(clientY)} scrollY=${Math.round(window.scrollY)}`)
     suppressClick.current = true
     setDrag({ id, startY: clientY, currentY: clientY, rects: snapshotRects(), startScrollY: window.scrollY })
   }
@@ -94,7 +86,6 @@ export function ActivityList({
   }
 
   function handleRowPointerDown(e: React.PointerEvent<HTMLDivElement>, id: string) {
-    logDragDebug(`activity/row.onPointerDown id=${id.slice(0, 8)} type=${e.pointerType} clientY=${Math.round(e.clientY)}`)
     // Touch only ever drags via the handle below (already touch-action:
     // none and committed instantly, with no delay for a competing native
     // scroll gesture to win). The row-wide long-press here waits 350ms
@@ -107,7 +98,6 @@ export function ActivityList({
     longPressTimer.current = setTimeout(() => {
       const p = pressStart.current
       if (!p) return
-      logDragDebug(`activity/row.longPressTimer fired id=${id.slice(0, 8)}`)
       beginDrag(p.id, p.y)
     }, LONG_PRESS_MS)
   }
@@ -116,14 +106,10 @@ export function ActivityList({
     if (drag || !pressStart.current) return
     const dx = e.clientX - pressStart.current.x
     const dy = e.clientY - pressStart.current.y
-    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) {
-      logDragDebug(`activity/row.onPointerMove CANCELLED longPress dx=${Math.round(dx)} dy=${Math.round(dy)}`)
-      clearLongPress()
-    }
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) clearLongPress()
   }
 
-  function handleRowPointerUpOrCancel(e: React.PointerEvent<HTMLDivElement>) {
-    logDragDebug(`activity/row.${e.type} id=${pressStart.current?.id?.slice(0, 8) ?? '—'}`)
+  function handleRowPointerUpOrCancel() {
     clearLongPress()
   }
 
@@ -136,7 +122,6 @@ export function ActivityList({
   }
 
   function handleHandlePointerDown(e: React.PointerEvent<HTMLButtonElement>, id: string) {
-    logDragDebug(`activity/handle.onPointerDown id=${id.slice(0, 8)} type=${e.pointerType} clientY=${Math.round(e.clientY)} scrollY=${Math.round(window.scrollY)}`)
     e.preventDefault()
     e.stopPropagation()
     beginDrag(id, e.clientY)
@@ -246,10 +231,6 @@ export function ActivityList({
               if (el) rowRefs.current.set(activity.id, el)
               else rowRefs.current.delete(activity.id)
             }}
-            data-drag-role="row"
-            data-drag-list="activity"
-            data-drag-index={activities.findIndex((a) => a.id === activity.id)}
-            data-drag-id={activity.id}
             onPointerDown={(e) => handleRowPointerDown(e, activity.id)}
             onPointerMove={handleRowPointerMove}
             onPointerUp={handleRowPointerUpOrCancel}
@@ -284,10 +265,6 @@ export function ActivityList({
             <button
               type="button"
               aria-label="Drag to reorder"
-              data-drag-role="handle"
-              data-drag-list="activity"
-              data-drag-index={activities.findIndex((a) => a.id === activity.id)}
-              data-drag-id={activity.id}
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => handleHandlePointerDown(e, activity.id)}
               className="shrink-0 touch-none rounded-lg p-2 text-slate-300 dark:text-slate-600"

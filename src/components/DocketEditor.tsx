@@ -3,7 +3,6 @@ import { v4 as uuid } from 'uuid'
 import type { DocketTask, PlanTask } from '../types'
 import { formatDuration } from '../utils/time'
 import { remainingMinutesForPlanTask, resolveDocketTaskTitle } from '../utils/focusSessions'
-import { logDragDebug } from '../utils/dragDebug' // TEMPORARY — see src/utils/dragDebug.ts
 
 const LONG_PRESS_MS = 350
 const MOVE_CANCEL_PX = 8
@@ -182,11 +181,9 @@ export function DocketEditor({
     scrollContainerRef.current = container
     const containerTop = container.getBoundingClientRect().top
     const scrollTop = container.scrollTop
-    const missingRefs: string[] = []
-    const rects = tasks.map((t) => {
+    return tasks.map((t) => {
       const el = rowRefs.current.get(t.id)
       const r = el?.getBoundingClientRect()
-      if (!el) missingRefs.push(t.id.slice(0, 8))
       return {
         id: t.id,
         top: r ? r.top - containerTop + scrollTop : 0,
@@ -195,18 +192,9 @@ export function DocketEditor({
         height: r?.height ?? 0,
       }
     })
-    const containerDesc =
-      container === document.documentElement || container === document.body
-        ? 'document'
-        : `<${container.tagName.toLowerCase()} class="${(container as HTMLElement).className.split(' ').slice(0, 2).join('.')}…">`
-    logDragDebug(
-      `docket/snapshotRects rows=${rects.length} missingRefs=${missingRefs.length ? missingRefs.join(',') : 'none'} container=${containerDesc} containerScrollTop=${Math.round(scrollTop)} containerTop=${Math.round(containerTop)}`,
-    )
-    return rects
   }
 
   function beginDrag(id: string, clientY: number) {
-    logDragDebug(`docket/beginDrag id=${id.slice(0, 8)} clientY=${Math.round(clientY)}`)
     suppressClick.current = true
     const rects = snapshotRects()
     setDrag({
@@ -227,9 +215,6 @@ export function DocketEditor({
   }
 
   function handleRowPointerDown(e: React.PointerEvent<HTMLDivElement>, id: string) {
-    logDragDebug(
-      `docket/row.onPointerDown id=${id.slice(0, 8)} type=${e.pointerType} clientY=${Math.round(e.clientY)} allowEdit=${allowEdit} editing=${!!editingTaskId}`,
-    )
     if (!allowEdit || editingTaskId) return
     // Touch only ever drags via the handle below (already touch-action:
     // none and committed instantly, with no delay for a competing native
@@ -243,7 +228,6 @@ export function DocketEditor({
     longPressTimer.current = setTimeout(() => {
       const p = pressStart.current
       if (!p) return
-      logDragDebug(`docket/row.longPressTimer fired id=${id.slice(0, 8)}`)
       beginDrag(p.id, p.y)
     }, LONG_PRESS_MS)
   }
@@ -252,14 +236,10 @@ export function DocketEditor({
     if (drag || !pressStart.current) return
     const dx = e.clientX - pressStart.current.x
     const dy = e.clientY - pressStart.current.y
-    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) {
-      logDragDebug(`docket/row.onPointerMove CANCELLED longPress dx=${Math.round(dx)} dy=${Math.round(dy)}`)
-      clearLongPress()
-    }
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) clearLongPress()
   }
 
-  function handleRowPointerUpOrCancel(e: React.PointerEvent<HTMLDivElement>) {
-    logDragDebug(`docket/row.${e.type} id=${pressStart.current?.id?.slice(0, 8) ?? '—'}`)
+  function handleRowPointerUpOrCancel() {
     clearLongPress()
   }
 
@@ -272,7 +252,6 @@ export function DocketEditor({
   }
 
   function handleHandlePointerDown(e: React.PointerEvent<HTMLButtonElement>, id: string) {
-    logDragDebug(`docket/handle.onPointerDown id=${id.slice(0, 8)} type=${e.pointerType} clientY=${Math.round(e.clientY)}`)
     e.preventDefault()
     e.stopPropagation()
     beginDrag(id, e.clientY)
@@ -448,10 +427,6 @@ export function DocketEditor({
                   if (el) rowRefs.current.set(task.id, el)
                   else rowRefs.current.delete(task.id)
                 }}
-                data-drag-role="row"
-                data-drag-list="docket"
-                data-drag-index={tasks.findIndex((t) => t.id === task.id)}
-                data-drag-id={task.id}
                 onPointerDown={(e) => handleRowPointerDown(e, task.id)}
                 onPointerMove={handleRowPointerMove}
                 onPointerUp={handleRowPointerUpOrCancel}
@@ -477,10 +452,6 @@ export function DocketEditor({
                     <button
                       type="button"
                       aria-label="Drag to reorder"
-                      data-drag-role="handle"
-                      data-drag-list="docket"
-                      data-drag-index={tasks.findIndex((t) => t.id === task.id)}
-                      data-drag-id={task.id}
                       onClick={(e) => e.stopPropagation()}
                       onPointerDown={(e) => handleHandlePointerDown(e, task.id)}
                       className="touch-none rounded-lg p-1.5 text-slate-300 dark:text-slate-600"
