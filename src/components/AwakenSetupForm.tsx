@@ -8,11 +8,14 @@ import { AwakenPracticesEditor } from './AwakenPracticesEditor'
 export function AwakenSetupForm({
   initial,
   onSave,
+  onStartNow,
   onDelete,
   onCancel,
 }: {
   initial?: Activity
   onSave: (activity: Activity) => void
+  /** Only offered when creating a brand-new AWAKEN (no `initial`) — starts an ad-hoc session immediately instead of adding it to the schedule. */
+  onStartNow?: (config: { title: string; durationMin: number; awakenPractices: AwakenPracticeTemplate[] }) => void
   onDelete?: () => void
   onCancel: () => void
 }) {
@@ -40,6 +43,11 @@ export function AwakenSetupForm({
       isFlexible: false,
       awakenPractices: practices,
     })
+  }
+
+  function handleStartNow() {
+    if (!canSave || !onStartNow) return
+    onStartNow({ title: title.trim(), durationMin, awakenPractices: practices })
   }
 
   return (
@@ -120,6 +128,17 @@ export function AwakenSetupForm({
         <p className="text-sm text-red-600 dark:text-red-400">Enable at least one practice.</p>
       )}
 
+      {onStartNow && (
+        <button
+          type="button"
+          onClick={handleStartNow}
+          disabled={!canSave}
+          className="w-full rounded-xl bg-indigo-50 py-3 font-semibold text-indigo-700 disabled:opacity-40 dark:bg-indigo-500/10 dark:text-indigo-300"
+        >
+          ▶ Start Now
+        </button>
+      )}
+
       <div className="flex gap-3 pt-1">
         {onDelete && (
           <button
@@ -143,7 +162,7 @@ export function AwakenSetupForm({
           disabled={!canSave}
           className="flex-1 rounded-xl bg-indigo-600 py-3.5 font-semibold text-white disabled:opacity-40"
         >
-          Save
+          {initial ? 'Save' : 'Add to Schedule'}
         </button>
       </div>
     </div>

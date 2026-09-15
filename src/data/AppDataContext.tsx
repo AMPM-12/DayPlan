@@ -13,6 +13,7 @@ import type {
   Activity,
   ActivityLog,
   AppDataExport,
+  AwakenPracticeTemplate,
   DayMapping,
   DayState,
   DocketTask,
@@ -25,6 +26,7 @@ import type {
 import { addDays, nowMinutes, todayDateString } from '../utils/time'
 import { resolveActivities } from '../utils/profiles'
 import { computeSchedule } from '../utils/schedule'
+import { buildAwakenDocket } from '../utils/awaken'
 import { useActivityNotifications } from '../hooks/useActivityNotifications'
 import { useSessionTimerNotification } from '../hooks/useSessionTimerNotification'
 import { useAwakenAutoAdvance } from '../hooks/useAwakenAutoAdvance'
@@ -94,6 +96,8 @@ interface AppDataValue {
   /** actualMinutes defaults to the task's plannedMinutes when omitted (e.g. an unattended AWAKEN practice completing on its own). */
   completeSessionTask: (status: DocketTaskStatus, actualMinutes?: number) => void
   endSessionEarly: () => void
+  /** Starts an ad-hoc AWAKEN session immediately — no schedule slot or profile Activity involved. Builds and starts the docket in one step. */
+  startAdHocAwaken: (config: { title: string; durationMin: number; awakenPractices: AwakenPracticeTemplate[] }) => void
 
   tasks: PlanTask[]
   addTask: (title: string, estimatedMinutes: number) => void
@@ -743,6 +747,42 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (flush) creditTaskTime(flush.taskId, flush.deltaMs)
   }, [persistToday, creditTaskTime])
 
+  // Builds and starts an AWAKEN docket for an id that exists nowhere in any
+  // profile — the day-state fields this touches (dockets, activeSessionTimer)
+  // are already keyed purely by activityId with no assumption that id
+  // resolves to a real Activity, so this just needs its own small config
+  // snapshot (adHocAwaken) for the title/duration/practices AwakenScreen
+  // would otherwise read off the Activity.
+  const startAdHocAwaken = useCallback(
+    (config: { title: string; durationMin: number; awakenPractices: AwakenPracticeTemplate[] }) => {
+      const id = uuid()
+      const fresh = buildAwakenDocket({
+        id,
+        title: config.title,
+        startTime: '',
+        durationMin: config.durationMin,
+        isAwaken: true,
+        awakenPractices: config.awakenPractices,
+      })
+      if (fresh.length === 0) return
+      persistToday((latest) => {
+        // Never clobber an already-running session (Focus or AWAKEN) — the
+        // UI disables "Start Now" while one is active, but guard here too
+        // rather than silently orphaning it.
+        if (latest.activeSessionTimer) return latest
+        const now = new Date()
+        const targetEndAt = new Date(now.getTime() + remainingMsForTask(fresh[0])).toISOString()
+        return {
+          ...latest,
+          adHocAwaken: { id, title: config.title, durationMin: config.durationMin, awakenPractices: config.awakenPractices },
+          dockets: { ...latest.dockets, [id]: fresh },
+          activeSessionTimer: { activityId: id, taskId: fresh[0].id, startedAt: now.toISOString(), targetEndAt },
+        }
+      })
+    },
+    [persistToday],
+  )
+
   const activeSessionTaskTitle = useMemo(() => {
     const timer = today.activeSessionTimer
     if (!timer) return undefined
@@ -752,12 +792,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useSessionTimerNotification(today.activeSessionTimer, activeSessionTaskTitle, notificationsEnabled)
 
   // Only AWAKEN practices auto-advance unattended — a regular focus-session
-  // task still waits for the user to confirm actual minutes spent.
+  // task still waits for the user to confirm actual minutes spent. Checks
+  // both a scheduled AWAKEN block (in todayActivities) and an ad-hoc one
+  // (today.adHocAwaken) — the latter has no profile Activity to look up.
   const activeTimer = today.activeSessionTimer
   const isAwakenTimerRunning =
     !!activeTimer &&
     activeTimer.pausedRemainingMs === undefined &&
-    !!todayActivities.find((a) => a.id === activeTimer.activityId)?.isAwaken
+    (!!todayActivities.find((a) => a.id === activeTimer.activityId)?.isAwaken ||
+      today.adHocAwaken?.id === activeTimer.activityId)
   useAwakenAutoAdvance(isAwakenTimerRunning ? activeTimer!.targetEndAt : undefined, () => {
     completeSessionTask('done')
   })
@@ -844,6 +887,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       switchSessionTask,
       completeSessionTask,
       endSessionEarly,
+      startAdHocAwaken,
       tasks,
       addTask,
       updateTask,
@@ -891,6 +935,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       switchSessionTask,
       completeSessionTask,
       endSessionEarly,
+      startAdHocAwaken,
       tasks,
       addTask,
       updateTask,

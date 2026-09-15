@@ -2,8 +2,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAppData } from '../data/AppDataContext'
 import { useNow } from '../hooks/useNow'
 import { formatCountdown, formatDuration } from '../utils/time'
-import { buildAwakenDocket, formatMinSec } from '../utils/awaken'
-import type { DocketTaskStatus } from '../types'
+import { buildAwakenDocket, findAwakenPracticePrompt, formatMinSec } from '../utils/awaken'
+import type { Activity, DocketTaskStatus } from '../types'
 
 const STATUS_ICON: Record<DocketTaskStatus, string> = {
   done: '✓',
@@ -27,9 +27,40 @@ export function AwakenScreen() {
   const location = useLocation()
   const awakenActivityId = (location.state as { awakenActivityId?: string } | null)?.awakenActivityId
 
-  const activity =
+  const scheduledActivity =
     todayActivities.find((a) => a.isAwaken && a.id === awakenActivityId) ??
     todayActivities.find((a) => a.isAwaken)
+
+  // An ad-hoc session started via "Start Now" isn't in todayActivities at
+  // all — it has no profile Activity or schedule slot — so it's carried
+  // instead as a small config snapshot on today's DayState. Its docket and
+  // timer still live in the normal dockets/activeSessionTimer, keyed by
+  // this id, exactly like a scheduled AWAKEN block.
+  const adHocConfig = today.adHocAwaken
+  const adHocActivity: Activity | undefined = adHocConfig
+    ? {
+        id: adHocConfig.id,
+        title: adHocConfig.title,
+        startTime: '',
+        durationMin: adHocConfig.durationMin,
+        isAwaken: true,
+        awakenPractices: adHocConfig.awakenPractices,
+      }
+    : undefined
+
+  const activeId = today.activeSessionTimer?.activityId
+  const adHocDocket = adHocActivity ? today.dockets?.[adHocActivity.id] : undefined
+  // Prefer whichever one currently owns the running timer; otherwise an
+  // ad-hoc session that's already been started or completed today (it's a
+  // one-off "do it now" action, so its result is more likely what the user
+  // wants to see than a not-yet-started scheduled block); otherwise the
+  // scheduled block; otherwise a never-started ad-hoc session as a last resort.
+  const activity =
+    (activeId && adHocActivity?.id === activeId ? adHocActivity : undefined) ??
+    (activeId && scheduledActivity?.id === activeId ? scheduledActivity : undefined) ??
+    (adHocDocket?.length ? adHocActivity : undefined) ??
+    scheduledActivity ??
+    adHocActivity
 
   if (!activity) {
     return (
@@ -139,6 +170,14 @@ export function AwakenScreen() {
               {activeTask.title}
               {isPaused && ' · Paused'}
             </p>
+            {(() => {
+              const prompt = findAwakenPracticePrompt(activity, activeTask.title)
+              return (
+                prompt && (
+                  <p className="mt-0.5 truncate text-sm text-indigo-500 dark:text-indigo-400">{prompt}</p>
+                )
+              )
+            })()}
             <p className="mt-2 text-6xl font-bold tabular-nums text-indigo-900 dark:text-indigo-50">
               {formatCountdown(remainingMs)}
             </p>

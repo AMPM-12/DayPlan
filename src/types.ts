@@ -40,6 +40,8 @@ export interface AwakenPracticeTemplate {
   id: string
   title: string
   enabled: boolean
+  /** Short one-line reminder of what this practice means, shown as subtext under the name — editable in place alongside the title, same convention (no separate "is this overridden" flag needed). */
+  prompt?: string
 }
 
 export interface ActivityLog {
@@ -152,6 +154,20 @@ export interface DayState {
    * this date only; absent entries fall back to the template.
    */
   focusSessionOverrides?: Record<string, boolean>
+  /**
+   * An ad-hoc AWAKEN session started today via "Start Now" — not tied to
+   * any profile Activity or schedule slot. Its docket and timer still live
+   * in `dockets`/`activeSessionTimer` above, keyed by this id, exactly like
+   * a scheduled AWAKEN block; this just carries the title/duration/practice
+   * config that would otherwise come from the Activity. Persists for the
+   * rest of the day like any other session data.
+   */
+  adHocAwaken?: {
+    id: string
+    title: string
+    durationMin: number
+    awakenPractices: AwakenPracticeTemplate[]
+  }
 }
 
 /**

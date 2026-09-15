@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../data/AppDataContext'
 import type { Activity, AppDataExport, Weekday } from '../types'
 import { parseTimeToMinutes, todayDateString } from '../utils/time'
@@ -43,7 +44,9 @@ export function EditPlanScreen() {
     importData,
     notificationsEnabled,
     setNotificationsEnabled,
+    startAdHocAwaken,
   } = useAppData()
+  const navigate = useNavigate()
 
   const [activeProfileId, setActiveProfileId] = useState(defaultProfileId)
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? profiles[0]
@@ -273,6 +276,15 @@ export function EditPlanScreen() {
                   else addActivity(activeProfileId, activity)
                   close()
                 }}
+                onStartNow={
+                  isNewAwaken
+                    ? (config) => {
+                        startAdHocAwaken(config)
+                        close()
+                        navigate('/awaken')
+                      }
+                    : undefined
+                }
                 onDelete={
                   existing
                     ? () => {

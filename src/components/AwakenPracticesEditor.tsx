@@ -17,6 +17,10 @@ export function AwakenPracticesEditor({
     onChange(practices.map((p) => (p.id === id ? { ...p, title } : p)))
   }
 
+  function setPrompt(id: string, prompt: string) {
+    onChange(practices.map((p) => (p.id === id ? { ...p, prompt } : p)))
+  }
+
   function toggleEnabled(id: string) {
     onChange(practices.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)))
   }
@@ -43,13 +47,23 @@ export function AwakenPracticesEditor({
             >
               {p.enabled ? '✓' : ''}
             </button>
-            <input
-              type="text"
-              value={p.title}
-              onChange={(e) => setTitle(p.id, e.target.value)}
-              disabled={!p.enabled}
-              className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-slate-700 focus:border-slate-200 focus:bg-white dark:text-slate-200 dark:focus:border-slate-700 dark:focus:bg-slate-800"
-            />
+            <div className="min-w-0 flex-1">
+              <input
+                type="text"
+                value={p.title}
+                onChange={(e) => setTitle(p.id, e.target.value)}
+                disabled={!p.enabled}
+                className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-slate-700 focus:border-slate-200 focus:bg-white dark:text-slate-200 dark:focus:border-slate-700 dark:focus:bg-slate-800"
+              />
+              <input
+                type="text"
+                value={p.prompt ?? ''}
+                onChange={(e) => setPrompt(p.id, e.target.value)}
+                disabled={!p.enabled}
+                placeholder="Reminder (optional)"
+                className="w-full truncate rounded-lg border border-transparent bg-transparent px-2 py-0.5 text-xs text-slate-400 focus:border-slate-200 focus:bg-white focus:text-slate-600 dark:text-slate-500 dark:focus:border-slate-700 dark:focus:bg-slate-800 dark:focus:text-slate-300"
+              />
+            </div>
             {duration !== undefined && (
               <span className="shrink-0 text-xs tabular-nums text-slate-400 dark:text-slate-500">
                 {formatMinSec(duration)}

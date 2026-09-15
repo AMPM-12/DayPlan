@@ -11,6 +11,18 @@ function enabledPractices(activity: Activity): AwakenPracticeTemplate[] {
 }
 
 /**
+ * The reminder prompt for a running docket task, matched by title against
+ * this activity's practice templates (DocketTask itself carries no
+ * practice-specific fields — buildAwakenDocket just copies the title, so
+ * matching on it here avoids widening the shared DocketTask type for one
+ * AWAKEN-only field). Falls back to no prompt if the title was since
+ * renamed to something with no matching template.
+ */
+export function findAwakenPracticePrompt(activity: Activity, taskTitle: string): string | undefined {
+  return awakenPracticeTemplates(activity).find((p) => p.title === taskTitle)?.prompt
+}
+
+/**
  * Splits a total number of seconds evenly across `count` parts, handing the
  * leftover seconds to the first parts one at a time — so the parts always
  * sum exactly back to the total instead of losing time to rounding.
