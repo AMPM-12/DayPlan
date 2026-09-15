@@ -215,6 +215,19 @@ export function DocketEditor({
   }
 
   function handleRowPointerDown(e: React.PointerEvent<HTMLDivElement>, id: string) {
+    // HYPOTHESIS FIX, deliberately reproduced — do not remove without
+    // re-testing on a real touchscreen. Touch drag-start worked reliably at
+    // every list length while temporary debug logging sat at the top of
+    // this handler; it broke again at the same "screenful" threshold the
+    // moment that logging-only code was removed (confirmed via diff that
+    // nothing else changed — no drag/scroll logic was touched). The one
+    // thing that logging had in common with this line is a small amount of
+    // synchronous work executed before anything else runs. This forces a
+    // layout read (result discarded) to reproduce that side effect on
+    // purpose: if it holds up, the native touch/scroll gesture arbitration
+    // is apparently sensitive to whether a layout flush happens
+    // synchronously at pointerdown, not to anything about our drag logic.
+    e.currentTarget.getBoundingClientRect()
     if (!allowEdit || editingTaskId) return
     // Touch only ever drags via the handle below (already touch-action:
     // none and committed instantly, with no delay for a competing native
@@ -252,6 +265,8 @@ export function DocketEditor({
   }
 
   function handleHandlePointerDown(e: React.PointerEvent<HTMLButtonElement>, id: string) {
+    // HYPOTHESIS FIX — see the matching comment in handleRowPointerDown above.
+    e.currentTarget.getBoundingClientRect()
     e.preventDefault()
     e.stopPropagation()
     beginDrag(id, e.clientY)
