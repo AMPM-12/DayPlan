@@ -374,7 +374,10 @@ export function TaskList({
                   onPointerUp={handleRowPointerUpOrCancel}
                   onPointerCancel={handleRowPointerUpOrCancel}
                   onClick={() => handleRowClick(task)}
-                  className="flex cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
+                  // will-change-transform: promotes each row to its own
+                  // compositor layer up front — see the "touch dead zone"
+                  // theory in commit history (unconfirmed on-device).
+                  className="flex cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 will-change-transform dark:bg-slate-800/40 dark:ring-white/5"
                 >
                   <button
                     type="button"
@@ -426,7 +429,7 @@ export function TaskList({
                     aria-label="Drag to reorder"
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => handleHandlePointerDown(e, task.id)}
-                    className="shrink-0 touch-none rounded-lg p-2 text-slate-300 dark:text-slate-600"
+                    className="shrink-0 touch-none rounded-lg p-2 text-slate-300 will-change-transform dark:text-slate-600"
                   >
                     ⠿
                   </button>

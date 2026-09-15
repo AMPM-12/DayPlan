@@ -21,7 +21,16 @@ export function Sheet({
       />
       <div
         className="relative w-full max-w-md rounded-t-3xl bg-white p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900"
-        style={{ maxHeight: '85vh', overflowY: 'auto' }}
+        // willChange: 'transform' promotes this scroll container to its own
+        // compositor layer up front, rather than iOS Safari deciding to
+        // (re)composite it lazily — the classic mitigation for the nested
+        // -webkit-overflow-scrolling "touch dead zone" bug class, applied
+        // here even though that property itself isn't used anywhere in this
+        // codebase (verified). Unconfirmed on-device as of this commit —
+        // this is the one scrollable container in the app that's actually a
+        // nested overflow:auto region rather than plain page scroll, so if
+        // that bug class is real anywhere here, it's here.
+        style={{ maxHeight: '85vh', overflowY: 'auto', willChange: 'transform' }}
       >
         <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200 dark:bg-slate-700" />
         <div className="mb-4 flex items-center justify-between">

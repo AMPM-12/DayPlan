@@ -251,7 +251,12 @@ export function ActivityList({
             onPointerUp={handleRowPointerUpOrCancel}
             onPointerCancel={handleRowPointerUpOrCancel}
             onClick={() => handleRowClick(activity)}
-            className="flex w-full items-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
+            // will-change-transform: promotes each row to its own compositor
+            // layer up front, rather than letting iOS Safari decide to
+            // promote/repaint it lazily once scrolled into view — see the
+            // "touch dead zone" theory in commit history for why this is
+            // here (unconfirmed on-device as of this commit).
+            className="flex w-full items-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm ring-1 ring-slate-900/5 will-change-transform dark:bg-slate-800/40 dark:ring-white/5"
           >
             <div className="w-14 shrink-0 text-xs font-semibold text-slate-500 dark:text-slate-400">
               {formatClock(parseTimeToMinutes(activity.startTime))}
@@ -282,7 +287,7 @@ export function ActivityList({
               aria-label="Drag to reorder"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => handleHandlePointerDown(e, activity.id)}
-              className="shrink-0 touch-none rounded-lg p-2 text-slate-300 dark:text-slate-600"
+              className="shrink-0 touch-none rounded-lg p-2 text-slate-300 will-change-transform dark:text-slate-600"
             >
               ⠿
             </button>

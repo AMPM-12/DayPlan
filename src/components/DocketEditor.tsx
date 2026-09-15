@@ -447,7 +447,10 @@ export function DocketEditor({
                 onPointerUp={handleRowPointerUpOrCancel}
                 onPointerCancel={handleRowPointerUpOrCancel}
                 onClick={() => handleRowClick(task)}
-                className={`flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60 ${allowEdit ? 'cursor-pointer' : ''}`}
+                // will-change-transform: promotes each row to its own
+                // compositor layer up front — see the "touch dead zone"
+                // theory in commit history (unconfirmed on-device).
+                className={`flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 will-change-transform dark:bg-slate-800/60 ${allowEdit ? 'cursor-pointer' : ''}`}
               >
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -469,7 +472,7 @@ export function DocketEditor({
                       aria-label="Drag to reorder"
                       onClick={(e) => e.stopPropagation()}
                       onPointerDown={(e) => handleHandlePointerDown(e, task.id)}
-                      className="touch-none rounded-lg p-1.5 text-slate-300 dark:text-slate-600"
+                      className="touch-none rounded-lg p-1.5 text-slate-300 will-change-transform dark:text-slate-600"
                     >
                       ⠿
                     </button>
