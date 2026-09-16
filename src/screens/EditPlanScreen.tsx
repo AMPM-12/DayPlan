@@ -431,7 +431,7 @@ export function EditPlanScreen() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="application/json"
+            accept=".json,application/json"
             onChange={handleFileSelected}
             className="hidden"
           />
