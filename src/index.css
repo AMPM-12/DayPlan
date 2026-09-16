@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+@theme {
+  /* Design tokens — locked 2026-09-16, contrast-checked AA.
+     Palette references: Braun/Rams wall clocks, analog barometer
+     dials, Things 3. One accent color only — do not add a second. */
+  --color-cream: #F5F1E8;
+  --color-charcoal: #2B2825;
+  --color-sage: #5F7B5A;       /* primary accent — buttons, progress fill */
+  --color-sage-light: #7FA07A; /* lighter accent tint — hover, highlights */
+  --color-muted: #6E695D;      /* secondary text — AA 4.92:1 on cream */
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Type scale: 1.250 Major Third, base 16px */
+  --text-caption: 0.8rem;   /* 12.8px — "up next" labels, secondary text */
+  --text-heading: 1.25rem;  /* 20px — section headers */
+  --text-time: 1.953rem;    /* ~31px — the NOW time digit specifically */
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

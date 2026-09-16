@@ -35,8 +35,7 @@ export function NowCard({
   return (
     <div
       onClick={() => onTap(item)}
-      className="w-full cursor-pointer rounded-3xl p-6 text-left shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
-      style={{ backgroundColor: `${accent}14` }}
+      className="w-full cursor-pointer rounded-3xl bg-cream p-6 text-left shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
     >
       <div className="mb-2 flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: accent }} />
@@ -71,22 +70,22 @@ export function NowCard({
           🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
         </p>
       )}
-      <h2 className="text-2xl font-semibold leading-snug text-slate-900 dark:text-slate-50">
+      <h2 className="font-sans text-base font-medium leading-snug text-charcoal">
         {item.activity.title}
       </h2>
 
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-1 font-mono text-time text-charcoal">
         {formatClock(item.start)} – {formatClock(item.end)}
       </p>
 
-      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10 dark:bg-white/10">
+      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-sage-light/20">
         <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${percent}%`, backgroundColor: accent }}
+          className="h-full rounded-full bg-sage transition-all"
+          style={{ width: `${percent}%` }}
         />
       </div>
 
-      <p className="mt-2.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+      <p className="mt-2.5 text-caption text-muted">
         {remaining > 0 ? `${formatDuration(remaining)} remaining` : 'Wrapping up'}
       </p>
     </div>
