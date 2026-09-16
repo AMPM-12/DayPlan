@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import type { Activity, CategoryId, FlexOption } from '../types'
-import { CATEGORIES } from '../data/categories'
+import { CATEGORIES, CATEGORY_ICONS } from '../data/categories'
 
 const DURATION_PRESETS = [5, 10, 15, 30, 45, 60, 90, 120]
 
@@ -125,20 +125,24 @@ export function ActivityForm({
           >
             None
           </button>
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setCategory(c.id)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                category === c.id
-                  ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900'
-                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
+          {CATEGORIES.map((c) => {
+            const Icon = CATEGORY_ICONS[c.id]
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setCategory(c.id)}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
+                  category === c.id
+                    ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900'
+                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                }`}
+              >
+                <Icon width={14} height={14} aria-hidden />
+                {c.label}
+              </button>
+            )
+          })}
         </div>
       </div>
 
