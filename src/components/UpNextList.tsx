@@ -1,5 +1,6 @@
 import type { ScheduleItem } from '../utils/schedule'
 import { formatClock, formatDuration } from '../utils/time'
+import { CategoryDot } from './CategoryTag'
 
 export function UpNextList({
   items,
@@ -28,7 +29,7 @@ export function UpNextList({
             onClick={() => onTap(item)}
             className="flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-cream px-4 py-3 text-left shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
           >
-            <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-sage" aria-hidden />
+            <CategoryDot category={item.activity.category} />
             <div className="min-w-0 flex-1">
               <p className="truncate font-sans font-medium text-charcoal">
                 {item.activity.isFocusSession && (

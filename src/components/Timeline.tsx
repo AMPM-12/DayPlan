@@ -21,7 +21,7 @@ function TimelineRow({
 
   return (
     <div ref={markerRef} className="flex gap-3">
-      <div className="w-16 shrink-0 pt-3 text-right text-xs font-medium text-slate-400 dark:text-slate-500">
+      <div className="w-16 shrink-0 pt-3 text-right font-mono text-caption text-muted">
         {formatClock(item.start)}
       </div>
       <div className="relative flex flex-col items-center">
@@ -40,24 +40,24 @@ function TimelineRow({
         className={`mb-3 flex flex-1 items-start gap-2 rounded-2xl px-4 py-3 text-left transition-colors ${
           isCurrent
             ? 'bg-indigo-50 ring-1 ring-indigo-200 dark:bg-indigo-500/10 dark:ring-indigo-500/30'
-            : 'bg-white ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5'
+            : 'bg-cream ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5'
         } ${isPast ? 'opacity-50' : ''} cursor-pointer`}
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <CategoryDot category={item.activity.category} />
             <p
-              className={`truncate font-medium text-slate-800 dark:text-slate-100 ${
+              className={`truncate font-sans font-medium text-charcoal ${
                 item.completed ? 'line-through decoration-slate-400' : ''
               }`}
             >
               {item.activity.isAwaken && (
-                <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                <span className="mr-1 text-caption text-muted">
                   ☀️ AWAKEN
                 </span>
               )}
               {item.activity.isFocusSession && (
-                <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                <span className="mr-1 text-caption text-muted">
                   🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
                 </span>
               )}
@@ -65,7 +65,7 @@ function TimelineRow({
             </p>
             {item.completed && <span className="text-emerald-500">✓</span>}
           </div>
-          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-0.5 font-mono text-caption text-muted">
             {formatDuration(item.activity.durationMin)} · ends {formatClock(item.end)}
           </p>
         </div>
@@ -108,7 +108,7 @@ export function Timeline({
   return (
     <div className="relative">
       <div className="mb-2 flex items-center justify-between px-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <h3 className="font-semibold uppercase tracking-wide text-caption text-muted">
           Today
         </h3>
         {hasCurrent && (

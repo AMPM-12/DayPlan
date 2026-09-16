@@ -130,11 +130,11 @@ export function ActivityForm({
               key={c.id}
               type="button"
               onClick={() => setCategory(c.id)}
-              className="rounded-full px-3 py-1.5 text-xs font-medium"
-              style={{
-                backgroundColor: category === c.id ? c.color : `${c.color}1a`,
-                color: category === c.id ? 'white' : c.color,
-              }}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                category === c.id
+                  ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900'
+                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+              }`}
             >
               {c.label}
             </button>

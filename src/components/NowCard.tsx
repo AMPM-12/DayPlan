@@ -1,4 +1,3 @@
-import { getCategory } from '../data/categories'
 import type { ScheduleItem } from '../utils/schedule'
 import { formatClock, formatDuration } from '../utils/time'
 
@@ -25,12 +24,10 @@ export function NowCard({
     )
   }
 
-  const cat = getCategory(item.activity.category)
   const total = item.end - item.start
   const elapsed = Math.min(Math.max(nowMins - item.start, 0), total)
   const percent = total > 0 ? (elapsed / total) * 100 : 0
   const remaining = Math.max(item.end - nowMins, 0)
-  const accent = cat?.color ?? '#4f46e5'
 
   return (
     <div
@@ -38,7 +35,7 @@ export function NowCard({
       className="w-full cursor-pointer rounded-3xl bg-cream p-6 text-left shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
     >
       <div className="mb-2 flex items-center gap-2">
-        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: accent }} />
+        <span className="h-2.5 w-2.5 rounded-full bg-sage" />
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Now
         </span>

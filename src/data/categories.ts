@@ -1,14 +1,33 @@
 import type { Category, CategoryId } from '../types'
+import {
+  IconBriefcase,
+  IconCoffee,
+  IconHeartPulse,
+  IconHouse,
+  IconSparkles,
+  IconUser,
+  IconUsers,
+} from '../components/icons/CategoryIcons'
 
 export const CATEGORIES: Category[] = [
-  { id: 'spiritual', label: 'Spiritual', color: '#8b5cf6' },
-  { id: 'work', label: 'Work', color: '#2563eb' },
-  { id: 'health', label: 'Health', color: '#16a34a' },
-  { id: 'family', label: 'Family', color: '#f59e0b' },
-  { id: 'home', label: 'Home', color: '#78716c' },
-  { id: 'personal', label: 'Personal', color: '#ec4899' },
-  { id: 'free', label: 'Free time', color: '#06b6d4' },
+  { id: 'spiritual', label: 'Spiritual' },
+  { id: 'work', label: 'Work' },
+  { id: 'health', label: 'Health' },
+  { id: 'family', label: 'Family' },
+  { id: 'home', label: 'Home' },
+  { id: 'personal', label: 'Personal' },
+  { id: 'free', label: 'Free time' },
 ]
+
+export const CATEGORY_ICONS: Record<CategoryId, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
+  spiritual: IconSparkles,
+  work: IconBriefcase,
+  health: IconHeartPulse,
+  family: IconUsers,
+  home: IconHouse,
+  personal: IconUser,
+  free: IconCoffee,
+}
 
 export function getCategory(id?: CategoryId): Category | undefined {
   if (!id) return undefined

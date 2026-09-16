@@ -10,7 +10,6 @@ export type CategoryId =
 export interface Category {
   id: CategoryId
   label: string
-  color: string
 }
 
 export interface FlexOption {
