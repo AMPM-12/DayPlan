@@ -62,6 +62,7 @@ export function EditPlanScreen() {
   const [pendingImport, setPendingImport] = useState<AppDataExport | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
   const [importDone, setImportDone] = useState(false)
+  const [pasteText, setPasteText] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [notifOpen, setNotifOpen] = useState(false)
@@ -118,17 +119,34 @@ export function EditPlanScreen() {
     fileInputRef.current?.click()
   }
 
+  function importFromText(text: string) {
+    try {
+      setPendingImport(parseAppDataExport(text))
+      setImportError(null)
+      return true
+    } catch (err) {
+      setPendingImport(null)
+      setImportError(err instanceof Error ? err.message : 'Could not read that file.')
+      return false
+    }
+  }
+
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
     try {
       const text = await file.text()
-      setPendingImport(parseAppDataExport(text))
-      setImportError(null)
+      importFromText(text)
     } catch (err) {
       setPendingImport(null)
       setImportError(err instanceof Error ? err.message : 'Could not read that file.')
+    }
+  }
+
+  function handlePasteImport() {
+    if (importFromText(pasteText)) {
+      setPasteText('')
     }
   }
 
@@ -493,6 +511,25 @@ export function EditPlanScreen() {
                   className="w-full rounded-xl bg-slate-100 py-3 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
                   Choose file…
+                </button>
+
+                <p className="mb-2 mt-4 text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Or paste backup text
+                </p>
+                <textarea
+                  value={pasteText}
+                  onChange={(e) => setPasteText(e.target.value)}
+                  rows={4}
+                  placeholder="Paste exported JSON here…"
+                  className="mb-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  onClick={handlePasteImport}
+                  disabled={!pasteText.trim()}
+                  className="w-full rounded-xl bg-slate-100 py-3 font-medium text-slate-700 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  Import from pasted text
                 </button>
                 {importError && (
                   <p className="mt-2 text-sm text-red-600 dark:text-red-400">{importError}</p>
