@@ -27,6 +27,11 @@
 
 html.dark {
   color-scheme: dark;
+  --color-cream: #1E1B17;       /* warm near-black, not cold slate */
+  --color-charcoal: #EDE6D6;    /* warm off-white text — 13.8:1 on bg */
+  --color-sage: #8FAF89;        /* lightened for legibility on dark — 7.07:1 */
+  --color-sage-light: #6F8F6A;  /* deeper tint for fills/tracks on dark bg */
+  --color-muted: #A79F8E;       /* secondary text — 6.53:1 on bg */
 }
 
 body {
