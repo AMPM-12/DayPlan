@@ -1,6 +1,5 @@
 import type { ScheduleItem } from '../utils/schedule'
 import { formatClock, formatDuration } from '../utils/time'
-import { CategoryDot } from './CategoryTag'
 
 export function UpNextList({
   items,
@@ -19,7 +18,7 @@ export function UpNextList({
 
   return (
     <div>
-      <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+      <h3 className="mb-2 px-1 font-semibold uppercase tracking-wide text-caption text-muted">
         Up next
       </h3>
       <div className="space-y-2">
@@ -27,11 +26,11 @@ export function UpNextList({
           <div
             key={item.activity.id}
             onClick={() => onTap(item)}
-            className="flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/60 dark:ring-white/10"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-cream px-4 py-3 text-left shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
           >
-            <CategoryDot category={item.activity.category} />
+            <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-sage" aria-hidden />
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-slate-800 dark:text-slate-100">
+              <p className="truncate font-sans font-medium text-charcoal">
                 {item.activity.isFocusSession && (
                   <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
                     🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
@@ -39,11 +38,11 @@ export function UpNextList({
                 )}
                 {item.activity.title}
               </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="font-mono text-caption text-muted">
                 {formatClock(item.start)}
               </p>
             </div>
-            <span className="shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="shrink-0 font-mono text-caption text-muted">
               in {formatDuration(item.start - nowMins)}
             </span>
             <button
