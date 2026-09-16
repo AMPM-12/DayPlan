@@ -71,7 +71,7 @@ export function NowCard({
         {item.activity.title}
       </h2>
 
-      <p className="mt-1 font-mono text-time text-charcoal">
+      <p className="mt-1 font-mono text-heading text-charcoal">
         {formatClock(item.start)} – {formatClock(item.end)}
       </p>
 
