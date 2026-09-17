@@ -451,7 +451,7 @@ export function EditPlanScreen() {
 
           {pendingImport ? (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600 dark:text-slate-300">
+              <p className="text-sm text-charcoal">
                 This will replace all profiles, the weekly schedule, every day's history
                 (completions, overrides, and logs), and your task list with the contents of this
                 file. This can't be undone.
@@ -460,7 +460,7 @@ export function EditPlanScreen() {
                 <button
                   type="button"
                   onClick={() => setPendingImport(null)}
-                  className="flex-1 rounded-xl bg-slate-100 py-3 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  className="flex-1 rounded-xl bg-charcoal/5 py-3 font-medium text-charcoal"
                 >
                   Cancel
                 </button>
@@ -476,34 +476,34 @@ export function EditPlanScreen() {
           ) : (
             <>
               <div>
-                <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <p className="mb-2 text-sm font-medium text-charcoal">
                   Export
                 </p>
-                <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mb-3 text-sm text-muted">
                   Download every profile, the weekly schedule, all day history, and your task
                   list as one JSON file.
                 </p>
                 <button
                   type="button"
                   onClick={handleExport}
-                  className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white"
+                  className="w-full rounded-xl bg-sage py-3 font-semibold text-white"
                 >
                   Export data
                 </button>
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <p className="mb-2 text-sm font-medium text-charcoal">
                   Import
                 </p>
-                <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mb-3 text-sm text-muted">
                   Restore from a previously exported file. You'll be asked to confirm before
                   anything is overwritten.
                 </p>
                 <button
                   type="button"
                   onClick={handlePickFile}
-                  className="w-full rounded-xl bg-slate-100 py-3 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  className="w-full rounded-xl bg-charcoal/5 py-3 font-medium text-charcoal"
                 >
                   Choose file…
                 </button>
@@ -511,7 +511,7 @@ export function EditPlanScreen() {
                   <p className="mt-2 text-sm text-red-600 dark:text-red-400">{importError}</p>
                 )}
                 {importDone && (
-                  <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">
+                  <p className="mt-2 text-sm text-sage">
                     Import complete.
                   </p>
                 )}
@@ -528,22 +528,22 @@ export function EditPlanScreen() {
             onClick={handleToggleNotifications}
             className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
               notificationsEnabled
-                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                : 'border-slate-200 dark:border-slate-700'
+                ? 'border-sage bg-sage/10'
+                : 'border-muted/30'
             }`}
           >
             <span
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${
-                notificationsEnabled ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+                notificationsEnabled ? 'bg-sage text-white' : 'bg-charcoal/10'
               }`}
             >
               {notificationsEnabled ? '✓' : ''}
             </span>
             <div>
-              <p className="font-medium text-slate-900 dark:text-slate-100">
+              <p className="font-medium text-charcoal">
                 Activity notifications
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-muted">
                 Get notified when a block is ending soon, and when the next one starts.
               </p>
             </div>
