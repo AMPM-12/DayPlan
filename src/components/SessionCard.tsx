@@ -205,12 +205,12 @@ export function SessionCard({
         </div>
       ) : isActiveHere ? (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-slate-50 p-6 text-center dark:bg-slate-800/60">
-            <p className="mb-1 text-sm font-medium text-slate-500 dark:text-slate-400">
+          <div className="rounded-2xl bg-charcoal/5 p-6 text-center">
+            <p className="mb-1 text-sm font-medium text-muted">
               {activeTask && resolveDocketTaskTitle(activeTask, planTasks)}
               {isPaused && ' · Paused'}
             </p>
-            <p className="text-5xl font-bold tabular-nums text-slate-900 dark:text-slate-50">
+            <p className="font-mono text-5xl font-bold tabular-nums text-charcoal">
               {formatCountdown(remainingMs)}
             </p>
           </div>
@@ -218,7 +218,7 @@ export function SessionCard({
           <button
             type="button"
             onClick={isPaused ? onResume : onPause}
-            className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
+            className="w-full rounded-xl bg-sage py-3.5 font-semibold text-white"
           >
             {isPaused ? 'Resume' : 'Pause'}
           </button>
@@ -234,7 +234,7 @@ export function SessionCard({
               <button
                 type="button"
                 onClick={beginComplete}
-                className="w-full rounded-xl bg-slate-100 py-3.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="w-full rounded-xl bg-charcoal/5 py-3.5 font-medium text-charcoal"
               >
                 Mark done
               </button>
@@ -242,7 +242,7 @@ export function SessionCard({
           <button
             type="button"
             onClick={onEndEarly}
-            className="w-full rounded-xl py-2 text-sm font-medium text-slate-400 dark:text-slate-500"
+            className="w-full rounded-xl py-2 text-sm font-medium text-muted"
           >
             End session early
           </button>
@@ -255,7 +255,7 @@ export function SessionCard({
           <button
             type="button"
             onClick={() => setEditUpcomingOpen(true)}
-            className="w-full rounded-xl py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+            className="w-full rounded-xl py-2 text-sm font-medium text-sage"
           >
             Edit upcoming tasks
           </button>
@@ -382,7 +382,7 @@ function AddTimeButtons({ onAdd }: { onAdd: (minutes: number) => void }) {
           key={m}
           type="button"
           onClick={() => onAdd(m)}
-          className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          className="rounded-full bg-charcoal/5 px-3 py-1.5 text-xs font-medium text-muted"
         >
           +{m}m
         </button>
@@ -413,16 +413,16 @@ function DocketList({
         const isSwitchable = !!onSelectTask && task.status === 'planned' && !isActive
         const content = (
           <>
-            <span className="min-w-0 truncate text-slate-700 dark:text-slate-300">
+            <span className="min-w-0 truncate text-charcoal">
               {STATUS_ICON[task.status]} {resolveDocketTaskTitle(task, planTasks)}
               {task.taskId && (
-                <span className="ml-1 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                <span className="ml-1 rounded-full bg-sage/10 px-1.5 py-0.5 text-[10px] font-medium text-sage">
                   ✅ Task
                 </span>
               )}
-              {isActive && <span className="ml-1 text-indigo-500 dark:text-indigo-400">• timing</span>}
+              {isActive && <span className="ml-1 text-sage">• timing</span>}
             </span>
-            <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+            <span className="shrink-0 font-mono text-xs text-muted">
               {typeof task.actualMinutes === 'number'
                 ? formatDuration(task.actualMinutes)
                 : formatDuration(task.plannedMinutes)}
@@ -434,7 +434,7 @@ function DocketList({
             <button
               type="button"
               onClick={() => onSelectTask(task.id)}
-              className="flex w-full items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-left text-sm hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-700/60"
+              className="flex w-full items-center justify-between gap-2 rounded-xl bg-charcoal/5 px-3 py-2 text-left text-sm hover:bg-charcoal/10"
             >
               {content}
             </button>
@@ -442,7 +442,7 @@ function DocketList({
         ) : (
           <li
             key={task.id}
-            className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/60"
+            className="flex items-center justify-between gap-2 rounded-xl bg-charcoal/5 px-3 py-2 text-sm"
           >
             {content}
           </li>
@@ -464,9 +464,9 @@ function CompleteConfirm({
   onConfirm: () => void
 }) {
   return (
-    <div className="space-y-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+    <div className="space-y-3 rounded-2xl bg-charcoal/5 p-4">
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
           Actual minutes spent
         </span>
         <input
@@ -475,21 +475,21 @@ function CompleteConfirm({
           inputMode="numeric"
           value={minutes}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
         />
       </label>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-xl bg-slate-100 py-2.5 font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+          className="flex-1 rounded-xl bg-charcoal/5 py-2.5 font-medium text-charcoal"
         >
           Cancel
         </button>
         <button
           type="button"
           onClick={onConfirm}
-          className="flex-1 rounded-xl bg-indigo-600 py-2.5 font-semibold text-white"
+          className="flex-1 rounded-xl bg-sage py-2.5 font-semibold text-white"
         >
           Confirm
         </button>
