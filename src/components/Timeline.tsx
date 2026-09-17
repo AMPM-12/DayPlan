@@ -47,7 +47,7 @@ function TimelineRow({
           <div className="flex items-center gap-2">
             <CategoryDot category={item.activity.category} />
             <p
-              className={`truncate font-sans font-medium text-charcoal ${
+              className={`font-sans font-medium text-charcoal ${
                 item.completed ? 'line-through decoration-slate-400' : ''
               }`}
             >
