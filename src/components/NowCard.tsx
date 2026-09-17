@@ -1,6 +1,7 @@
 import type { ScheduleItem } from '../utils/schedule'
 import { formatClock, formatDuration } from '../utils/time'
 import { IconTarget } from './icons/NavIcons'
+import { IconSun } from './icons/CategoryIcons'
 
 export function NowCard({
   item,
@@ -59,8 +60,9 @@ export function NowCard({
       </div>
 
       {item.activity.isAwaken && (
-        <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          ☀️ AWAKEN
+        <p className="mb-0.5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <IconSun width={14} height={14} className="shrink-0" />
+          AWAKEN
         </p>
       )}
       {item.activity.isFocusSession && (

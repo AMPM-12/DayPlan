@@ -3,6 +3,7 @@ import type { ScheduleItem } from '../utils/schedule'
 import { formatClock, formatDuration } from '../utils/time'
 import { CategoryDot } from './CategoryTag'
 import { IconTarget } from './icons/NavIcons'
+import { IconSun } from './icons/CategoryIcons'
 
 function TimelineRow({
   item,
@@ -53,8 +54,9 @@ function TimelineRow({
               }`}
             >
               {item.activity.isAwaken && (
-                <span className="mr-1 text-caption text-muted">
-                  ☀️ AWAKEN
+                <span className="mr-1 inline-flex items-center gap-1 text-caption text-muted">
+                  <IconSun width={12} height={12} className="shrink-0" />
+                  AWAKEN
                 </span>
               )}
               {item.activity.isFocusSession && (

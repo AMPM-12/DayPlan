@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Activity } from '../types'
 import { formatClock, formatDuration, parseTimeToMinutes } from '../utils/time'
 import { CategoryDot } from './CategoryTag'
+import { IconSun } from './icons/CategoryIcons'
 
 const LONG_PRESS_MS = 350
 const MOVE_CANCEL_PX = 8
@@ -253,8 +254,9 @@ export function ActivityList({
                   </span>
                 )}
                 {activity.isAwaken && (
-                  <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
-                    ☀️ AWAKEN
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                    <IconSun width={10} height={10} className="shrink-0" />
+                    AWAKEN
                   </span>
                 )}
               </div>
