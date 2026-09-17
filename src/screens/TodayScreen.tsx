@@ -112,9 +112,9 @@ export function TodayScreen() {
     <div className="mx-auto max-w-md px-4 pb-[calc(var(--bottom-nav-height)+1rem)] pt-[max(1.25rem,env(safe-area-inset-top))]">
       <header className="mb-5 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Today</h1>
+          <h1 className="text-xl font-bold text-charcoal">Today</h1>
           <div className="flex items-center gap-1.5">
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-muted">
               {formatDateHeading(todayDateString(now))}
             </p>
             {profiles.length > 1 && (
@@ -123,8 +123,8 @@ export function TodayScreen() {
                 onClick={() => setProfilePickerOpen(true)}
                 className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
                   isOverridden
-                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400'
-                    : 'text-slate-400 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800'
+                    ? 'bg-sage/10 text-sage'
+                    : 'text-muted hover:bg-charcoal/5'
                 }`}
               >
                 {effectiveProfile?.name ?? 'Default'}
@@ -300,14 +300,14 @@ export function TodayScreen() {
               }}
               className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left font-medium ${
                 p.id === effectiveProfileId
-                  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300'
-                  : 'bg-slate-50 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200'
+                  ? 'bg-sage/10 text-sage'
+                  : 'bg-charcoal/5 text-charcoal'
               }`}
             >
               <span>
                 {p.name}
                 {p.id === usualProfileId && (
-                  <span className="ml-2 text-xs font-normal text-slate-400">usual</span>
+                  <span className="ml-2 text-xs font-normal text-muted">usual</span>
                 )}
               </span>
               {p.id === effectiveProfileId && <span>✓</span>}
