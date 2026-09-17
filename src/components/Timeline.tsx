@@ -45,7 +45,7 @@ function TimelineRow({
             <CategoryDot category={item.activity.category} />
             <p
               className={`font-sans font-medium text-charcoal ${
-                item.completed ? 'line-through decoration-slate-400' : ''
+                item.completed ? 'line-through decoration-muted' : ''
               }`}
             >
               {item.activity.isAwaken && (
