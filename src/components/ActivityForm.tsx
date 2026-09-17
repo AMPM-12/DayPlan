@@ -52,7 +52,7 @@ export function ActivityForm({
   return (
     <div className="space-y-5">
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
           Title
         </span>
         <input
@@ -61,24 +61,24 @@ export function ActivityForm({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Study Book of Mormon"
           autoFocus={!initial}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
         />
       </label>
 
       <div className="flex gap-3">
         <label className="block flex-1">
-          <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span className="mb-1.5 block text-sm font-medium text-charcoal">
             Start time
           </span>
           <input
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
           />
         </label>
         <label className="block flex-1">
-          <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span className="mb-1.5 block text-sm font-medium text-charcoal">
             Duration (min)
           </span>
           <input
@@ -87,7 +87,7 @@ export function ActivityForm({
             inputMode="numeric"
             value={durationMin}
             onChange={(e) => setDurationMin(Number(e.target.value))}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
           />
         </label>
       </div>
@@ -100,8 +100,8 @@ export function ActivityForm({
             onClick={() => setDurationMin(d)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium ${
               durationMin === d
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                ? 'bg-sage text-white'
+                : 'bg-charcoal/5 text-charcoal'
             }`}
           >
             {d < 60 ? `${d}m` : `${d / 60}h`}
@@ -110,8 +110,8 @@ export function ActivityForm({
       </div>
 
       <div>
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Category <span className="font-normal text-slate-400">(optional)</span>
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
+          Category <span className="font-normal text-muted">(optional)</span>
         </span>
         <div className="flex flex-wrap gap-2">
           <button
@@ -120,7 +120,7 @@ export function ActivityForm({
             className={`rounded-full px-3 py-1.5 text-xs font-medium ${
               !category
                 ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900'
-                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                : 'bg-charcoal/5 text-charcoal'
             }`}
           >
             None
@@ -135,7 +135,7 @@ export function ActivityForm({
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
                   category === c.id
                     ? 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900'
-                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                    : 'bg-charcoal/5 text-charcoal'
                 }`}
               >
                 <Icon width={14} height={14} aria-hidden />
@@ -147,14 +147,14 @@ export function ActivityForm({
       </div>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Notes <span className="font-normal text-slate-400">(optional)</span>
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
+          Notes <span className="font-normal text-muted">(optional)</span>
         </span>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
         />
       </label>
 
@@ -163,20 +163,20 @@ export function ActivityForm({
         onClick={() => setIsFlexible((v) => !v)}
         className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
           isFlexible
-            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-            : 'border-slate-200 dark:border-slate-700'
+            ? 'border-sage bg-sage/10'
+            : 'border-muted/30'
         }`}
       >
         <span
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${
-            isFlexible ? 'bg-indigo-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+            isFlexible ? 'bg-sage text-white' : 'bg-charcoal/10'
           }`}
         >
           {isFlexible ? '✓' : ''}
         </span>
         <div>
-          <p className="font-medium text-slate-900 dark:text-slate-100">Flexible block</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="font-medium text-charcoal">Flexible block</p>
+          <p className="text-sm text-muted">
             Offer a few options instead of one fixed task
           </p>
         </div>
@@ -187,15 +187,15 @@ export function ActivityForm({
           {flexOptions.map((opt) => (
             <div
               key={opt.id}
-              className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60"
+              className="flex items-center gap-2 rounded-xl bg-charcoal/5 px-3 py-2"
             >
-              <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">
+              <span className="flex-1 text-sm text-charcoal">
                 {opt.label}
               </span>
               <button
                 type="button"
                 onClick={() => setFlexOptions((opts) => opts.filter((o) => o.id !== opt.id))}
-                className="text-slate-400"
+                className="text-muted"
                 aria-label="Remove option"
               >
                 ✕
@@ -214,12 +214,12 @@ export function ActivityForm({
                 }
               }}
               placeholder="Add an option"
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="flex-1 rounded-xl border border-muted/30 bg-cream px-4 py-2.5 text-base text-charcoal"
             />
             <button
               type="button"
               onClick={addOption}
-              className="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="rounded-xl bg-charcoal/5 px-4 py-2.5 text-sm font-medium text-charcoal"
             >
               Add
             </button>
@@ -232,20 +232,20 @@ export function ActivityForm({
         onClick={() => setIsFocusSession((v) => !v)}
         className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
           isFocusSession
-            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-            : 'border-slate-200 dark:border-slate-700'
+            ? 'border-sage bg-sage/10'
+            : 'border-muted/30'
         }`}
       >
         <span
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${
-            isFocusSession ? 'bg-indigo-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+            isFocusSession ? 'bg-sage text-white' : 'bg-charcoal/10'
           }`}
         >
           {isFocusSession ? '✓' : ''}
         </span>
         <div>
-          <p className="font-medium text-slate-900 dark:text-slate-100">Focus session</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="font-medium text-charcoal">Focus session</p>
+          <p className="text-sm text-muted">
             Adds a task docket and Productivity/Discipline scores in Focus Sessions
           </p>
         </div>
@@ -264,7 +264,7 @@ export function ActivityForm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-xl bg-slate-100 py-3.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="flex-1 rounded-xl bg-charcoal/5 py-3.5 font-medium text-charcoal"
         >
           Cancel
         </button>
@@ -272,7 +272,7 @@ export function ActivityForm({
           type="button"
           onClick={handleSave}
           disabled={!canSave}
-          className="flex-1 rounded-xl bg-indigo-600 py-3.5 font-semibold text-white disabled:opacity-40"
+          className="flex-1 rounded-xl bg-sage py-3.5 font-semibold text-white disabled:opacity-40"
         >
           Save
         </button>

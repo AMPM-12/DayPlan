@@ -65,13 +65,13 @@ export function AwakenScreen() {
   if (!activity) {
     return (
       <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-muted">
           No AWAKEN block found for today.
         </p>
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mt-4 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+          className="mt-4 text-sm font-medium text-sage"
         >
           Back to Today
         </button>
@@ -119,11 +119,11 @@ export function AwakenScreen() {
   return (
     <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">AWAKEN</h1>
+        <h1 className="text-xl font-bold text-charcoal">AWAKEN</h1>
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="text-sm font-medium text-slate-400 dark:text-slate-500"
+          className="text-sm font-medium text-muted"
         >
           Close
         </button>
@@ -131,9 +131,9 @@ export function AwakenScreen() {
 
       {isComplete ? (
         <div className="space-y-5 text-center">
-          <div className="rounded-3xl bg-indigo-50 p-8 dark:bg-indigo-500/10">
-            <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">AWAKEN COMPLETE</p>
-            <p className="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+          <div className="rounded-3xl bg-sage/10 p-8">
+            <p className="text-2xl font-bold text-sage">AWAKEN COMPLETE</p>
+            <p className="mt-2 font-mono text-sm font-medium text-sage">
               {docket.length} practices · {formatDuration(activity.durationMin)}
             </p>
           </div>
@@ -141,12 +141,12 @@ export function AwakenScreen() {
             {docket.map((task) => (
               <li
                 key={task.id}
-                className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/60"
+                className="flex items-center justify-between gap-2 rounded-xl bg-charcoal/5 px-3 py-2 text-sm"
               >
-                <span className="text-slate-700 dark:text-slate-300">
+                <span className="text-charcoal">
                   {STATUS_ICON[task.status]} {task.title}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
+                <span className="font-mono text-xs text-muted">
                   {formatDuration(task.actualMinutes ?? task.plannedMinutes)}
                 </span>
               </li>
@@ -155,18 +155,18 @@ export function AwakenScreen() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
+            className="w-full rounded-xl bg-sage py-3.5 font-semibold text-white"
           >
             Done
           </button>
         </div>
       ) : isActiveHere && activeTask ? (
         <div className="space-y-5">
-          <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted">
             Practice {activeTaskIndex + 1} of {docket.length}
           </p>
-          <div className="rounded-3xl bg-indigo-50 p-8 text-center dark:bg-indigo-500/10">
-            <p className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
+          <div className="rounded-3xl bg-sage/10 p-8 text-center">
+            <p className="text-lg font-semibold text-charcoal">
               {activeTask.title}
               {isPaused && ' · Paused'}
             </p>
@@ -174,64 +174,64 @@ export function AwakenScreen() {
               const prompt = findAwakenPracticePrompt(activity, activeTask.title)
               return (
                 prompt && (
-                  <p className="mt-0.5 truncate text-sm text-indigo-500 dark:text-indigo-400">{prompt}</p>
+                  <p className="mt-0.5 truncate text-sm text-sage">{prompt}</p>
                 )
               )
             })()}
-            <p className="mt-2 text-6xl font-bold tabular-nums text-indigo-900 dark:text-indigo-50">
+            <p className="mt-2 font-mono text-6xl font-bold tabular-nums text-charcoal">
               {formatCountdown(remainingMs)}
             </p>
-            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-indigo-900/10 dark:bg-white/10">
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-charcoal/10">
               <div
-                className="h-full rounded-full bg-indigo-600 transition-all dark:bg-indigo-400"
+                className="h-full rounded-full bg-sage transition-all"
                 style={{ width: `${percent}%` }}
               />
             </div>
           </div>
 
           {nextTask ? (
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-              Next: {nextTask.title} · {formatMinSec(nextTask.plannedMinutes)}
+            <p className="text-center text-sm text-muted">
+              Next: {nextTask.title} · <span className="font-mono">{formatMinSec(nextTask.plannedMinutes)}</span>
             </p>
           ) : (
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400">Last practice</p>
+            <p className="text-center text-sm text-muted">Last practice</p>
           )}
 
           <button
             type="button"
             onClick={isPaused ? resumeSessionTimer : pauseSessionTimer}
-            className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
+            className="w-full rounded-xl bg-sage py-3.5 font-semibold text-white"
           >
             {isPaused ? 'Resume' : 'Pause'}
           </button>
           <button
             type="button"
             onClick={handleSkip}
-            className="w-full rounded-xl bg-slate-100 py-3 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full rounded-xl bg-charcoal/5 py-3 font-medium text-charcoal"
           >
             Skip to next
           </button>
           <button
             type="button"
             onClick={endSessionEarly}
-            className="w-full rounded-xl py-2 text-sm font-medium text-slate-400 dark:text-slate-500"
+            className="w-full rounded-xl py-2 text-sm font-medium text-muted"
           >
             End AWAKEN early
           </button>
         </div>
       ) : hasStarted ? (
         <div className="space-y-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400">AWAKEN was ended early.</p>
+          <p className="text-sm text-muted">AWAKEN was ended early.</p>
           <ul className="space-y-1.5">
             {docket.map((task) => (
               <li
                 key={task.id}
-                className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/60"
+                className="flex items-center justify-between gap-2 rounded-xl bg-charcoal/5 px-3 py-2 text-sm"
               >
-                <span className="text-slate-700 dark:text-slate-300">
+                <span className="text-charcoal">
                   {STATUS_ICON[task.status]} {task.title}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
+                <span className="font-mono text-xs text-muted">
                   {formatDuration(task.actualMinutes ?? task.plannedMinutes)}
                 </span>
               </li>
@@ -240,24 +240,24 @@ export function AwakenScreen() {
         </div>
       ) : (
         <div className="space-y-5">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="font-mono text-sm text-muted">
             {preview.length} practices · {formatDuration(activity.durationMin)}
           </p>
           <ul className="space-y-1.5">
             {preview.map((task) => (
               <li
                 key={task.id}
-                className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-sm dark:bg-slate-800/60"
+                className="flex items-center justify-between gap-2 rounded-xl bg-charcoal/5 px-3 py-2.5 text-sm"
               >
-                <span className="font-medium text-slate-700 dark:text-slate-300">{task.title}</span>
-                <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                <span className="font-medium text-charcoal">{task.title}</span>
+                <span className="font-mono text-xs tabular-nums text-muted">
                   {formatMinSec(task.plannedMinutes)}
                 </span>
               </li>
             ))}
           </ul>
           {anotherSessionActive && (
-            <p className="text-center text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-center text-sm text-muted">
               Finish or pause the other running session first.
             </p>
           )}
@@ -265,7 +265,7 @@ export function AwakenScreen() {
             type="button"
             onClick={handleStart}
             disabled={anotherSessionActive || preview.length === 0}
-            className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white disabled:opacity-40"
+            className="w-full rounded-xl bg-sage py-3.5 font-semibold text-white disabled:opacity-40"
           >
             Start AWAKEN
           </button>
