@@ -420,13 +420,13 @@ export function EditPlanScreen() {
           {WEEKDAYS.map(([day, label]) => (
             <div
               key={day}
-              className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"
+              className="flex items-center justify-between rounded-xl bg-charcoal/5 px-3 py-2.5"
             >
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
+              <span className="text-sm font-medium text-charcoal">{label}</span>
               <select
                 value={dayMapping[day] ?? defaultProfileId}
                 onChange={(e) => setDayMapping(day, e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="rounded-lg border border-muted/30 bg-cream px-2.5 py-1.5 text-sm text-charcoal"
               >
                 {profiles.map((p) => (
                   <option key={p.id} value={p.id}>
