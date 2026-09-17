@@ -13,6 +13,7 @@ import { Sheet } from '../components/Sheet'
 import { ActivityActions } from '../components/ActivityActions'
 import { LogForm } from '../components/LogForm'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { IconTarget } from '../components/icons/NavIcons'
 
 export function TodayScreen() {
   const {
@@ -262,22 +263,22 @@ export function TodayScreen() {
               }}
               className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
                 optionsFor.activity.isFocusSession
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-                  : 'border-slate-200 dark:border-slate-700'
+                  ? 'border-sage bg-sage/10'
+                  : 'border-muted/30'
               }`}
             >
               <span
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${
                   optionsFor.activity.isFocusSession
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-200 dark:bg-slate-700'
+                    ? 'bg-sage text-white'
+                    : 'bg-charcoal/5 text-muted'
                 }`}
               >
-                🎯
+                <IconTarget width={16} height={16} />
               </span>
               <div>
-                <p className="font-medium text-slate-900 dark:text-slate-100">Focus session</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="font-medium text-charcoal">Focus session</p>
+                <p className="text-sm text-muted">
                   {optionsFor.activity.isFocusSession
                     ? 'Tap to make this a regular block for today'
                     : 'Tap to add a task docket for today'}

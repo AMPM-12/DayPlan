@@ -1,6 +1,7 @@
 import type { ScheduleItem } from '../utils/schedule'
 import { formatClock, formatDuration } from '../utils/time'
 import { CategoryDot } from './CategoryTag'
+import { IconTarget } from './icons/NavIcons'
 
 export function UpNextList({
   items,
@@ -33,8 +34,9 @@ export function UpNextList({
             <div className="min-w-0 flex-1">
               <p className="truncate font-sans font-medium text-charcoal">
                 {item.activity.isFocusSession && (
-                  <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
-                    🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
+                  <span className="mr-1 inline-flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                    <IconTarget width={12} height={12} className="shrink-0" />
+                    Session {sessionNumbers.get(item.activity.id) ?? '—'}
                   </span>
                 )}
                 {item.activity.title}

@@ -1,5 +1,6 @@
 import type { ScheduleItem } from '../utils/schedule'
 import { formatClock, formatDuration } from '../utils/time'
+import { IconTarget } from './icons/NavIcons'
 
 export function NowCard({
   item,
@@ -63,8 +64,9 @@ export function NowCard({
         </p>
       )}
       {item.activity.isFocusSession && (
-        <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
+        <p className="mb-0.5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <IconTarget width={14} height={14} className="shrink-0" />
+          Session {sessionNumbers.get(item.activity.id) ?? '—'}
         </p>
       )}
       <h2 className="font-sans text-base font-medium leading-snug text-charcoal">

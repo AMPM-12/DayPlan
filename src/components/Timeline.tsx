@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import type { ScheduleItem } from '../utils/schedule'
 import { formatClock, formatDuration } from '../utils/time'
 import { CategoryDot } from './CategoryTag'
+import { IconTarget } from './icons/NavIcons'
 
 function TimelineRow({
   item,
@@ -53,8 +54,9 @@ function TimelineRow({
                 </span>
               )}
               {item.activity.isFocusSession && (
-                <span className="mr-1 text-caption text-muted">
-                  🎯 Session {sessionNumbers.get(item.activity.id) ?? '—'}
+                <span className="mr-1 inline-flex items-center gap-1 text-caption text-muted">
+                  <IconTarget width={12} height={12} className="shrink-0" />
+                  Session {sessionNumbers.get(item.activity.id) ?? '—'}
                 </span>
               )}
               {item.activity.title}
