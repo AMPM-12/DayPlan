@@ -225,7 +225,7 @@ export function ActivityList({
       {others.map((activity, i) => (
         <div key={activity.id}>
           {drag && i === targetIndex && (
-            <div className="mb-2 h-1 rounded-full bg-indigo-400 dark:bg-indigo-500" />
+            <div className="mb-2 h-1 rounded-full bg-sage" />
           )}
           <div
             ref={(el) => {
@@ -254,7 +254,7 @@ export function ActivityList({
                   </span>
                 )}
                 {activity.isAwaken && (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sage/10 px-2 py-0.5 text-[10px] font-medium text-sage">
                     <IconSun width={10} height={10} className="shrink-0" />
                     AWAKEN
                   </span>
@@ -277,7 +277,7 @@ export function ActivityList({
         </div>
       ))}
       {drag && targetIndex === others.length && (
-        <div className="h-1 rounded-full bg-indigo-400 dark:bg-indigo-500" />
+        <div className="h-1 rounded-full bg-sage" />
       )}
 
       {drag && draggedActivity && draggedRect && (
@@ -293,7 +293,7 @@ export function ActivityList({
             zIndex: 50,
             pointerEvents: 'none',
           }}
-          className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-left shadow-xl ring-1 ring-indigo-300 dark:bg-slate-800 dark:ring-indigo-500/50"
+          className="flex items-center gap-2 rounded-2xl bg-cream px-4 py-3.5 text-left shadow-xl ring-1 ring-sage/40"
         >
           <div className="w-14 shrink-0 text-xs font-semibold text-slate-500 dark:text-slate-400">
             {formatClock(parseTimeToMinutes(draggedActivity.startTime))}
