@@ -97,7 +97,7 @@ export function FocusSessionsScreen() {
           <button
             type="button"
             onClick={() => setViewedDate(todayDateString())}
-            className="mt-1.5 w-full text-center text-xs font-medium text-indigo-600 dark:text-indigo-400"
+            className="mt-1.5 w-full text-center text-xs font-medium text-sage"
           >
             Back to today
           </button>
@@ -123,7 +123,7 @@ export function FocusSessionsScreen() {
               }}
               className={`rounded-3xl ring-4 transition-shadow duration-1000 ease-out ${
                 highlightId === activity.id
-                  ? 'ring-indigo-600 dark:ring-indigo-400'
+                  ? 'ring-sage'
                   : 'ring-transparent'
               }`}
             >
