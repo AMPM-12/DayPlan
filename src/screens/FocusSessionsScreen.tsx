@@ -71,24 +71,24 @@ export function FocusSessionsScreen() {
   return (
     <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
       <header className="mb-5">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Focus Sessions</h1>
+        <h1 className="text-xl font-bold text-charcoal">Focus Sessions</h1>
         <div className="mt-2 flex items-center gap-2">
           <button
             type="button"
             onClick={() => setViewedDate((d) => addDays(d, -1))}
             aria-label="Previous day"
-            className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+            className="rounded-full bg-charcoal/5 px-3 py-1.5 text-sm text-muted"
           >
             ‹
           </button>
-          <p className="flex-1 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="flex-1 text-center text-sm font-medium text-muted">
             {isToday ? 'Today' : formatDateHeading(viewedDate)}
           </p>
           <button
             type="button"
             onClick={() => setViewedDate((d) => addDays(d, 1))}
             aria-label="Next day"
-            className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+            className="rounded-full bg-charcoal/5 px-3 py-1.5 text-sm text-muted"
           >
             ›
           </button>
@@ -105,8 +105,8 @@ export function FocusSessionsScreen() {
       </header>
 
       {sessions.length === 0 ? (
-        <div className="rounded-3xl bg-slate-100 p-6 text-center dark:bg-slate-800/60">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="rounded-3xl bg-charcoal/5 p-6 text-center">
+          <p className="text-sm font-medium text-muted">
             {isToday
               ? 'No focus sessions today. Flag a block as a focus session in the Plan tab to see it here.'
               : 'No focus sessions on this date.'}

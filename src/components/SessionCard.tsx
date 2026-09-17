@@ -127,7 +127,7 @@ export function SessionCard({
   const timeLabel = `${formatClock(parseTimeToMinutes(activity.startTime))} · ${formatDuration(activity.durationMin)}`
 
   return (
-    <div className="rounded-3xl bg-cream p-5 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5">
+    <div className="rounded-3xl bg-cream p-5 shadow-sm ring-1 ring-charcoal/5">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">
         Session {sessionNumber}
       </p>
@@ -276,7 +276,7 @@ export function SessionCard({
                   type="button"
                   onClick={() => onStartTask(nextPlanned.id)}
                   disabled={anotherSessionActive}
-                  className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white disabled:opacity-40"
+                  className="w-full rounded-xl bg-sage py-3.5 font-semibold text-white disabled:opacity-40"
                 >
                   Resume
                 </button>
@@ -284,7 +284,7 @@ export function SessionCard({
                 <button
                   type="button"
                   onClick={() => setLoggingOpen(true)}
-                  className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
+                  className="w-full rounded-xl bg-sage py-3.5 font-semibold text-white"
                 >
                   Log this session
                 </button>
@@ -293,7 +293,7 @@ export function SessionCard({
                 <button
                   type="button"
                   onClick={() => setLoggingOpen(true)}
-                  className="w-full rounded-xl bg-slate-100 py-3 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  className="w-full rounded-xl bg-charcoal/5 py-3 font-medium text-charcoal"
                 >
                   Log this session
                 </button>
@@ -362,7 +362,7 @@ export function SessionCard({
       </Sheet>
 
       <Sheet open={editUpcomingOpen} onClose={() => setEditUpcomingOpen(false)} title="Upcoming tasks">
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mb-4 text-sm text-muted">
           {activeTask && resolveDocketTaskTitle(activeTask, planTasks)} is the current task and isn't
           editable here — everything after it is.
         </p>

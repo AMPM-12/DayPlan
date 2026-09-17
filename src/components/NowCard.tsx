@@ -18,8 +18,8 @@ export function NowCard({
 }) {
   if (!item) {
     return (
-      <div className="rounded-3xl bg-slate-100 p-6 text-center dark:bg-slate-800/60">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+      <div className="rounded-3xl bg-charcoal/5 p-6 text-center">
+        <p className="text-sm font-medium text-muted">
           Nothing scheduled right now
         </p>
       </div>
@@ -34,15 +34,15 @@ export function NowCard({
   return (
     <div
       onClick={() => onTap(item)}
-      className="w-full cursor-pointer rounded-3xl bg-cream p-6 text-left shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
+      className="w-full cursor-pointer rounded-3xl bg-cream p-6 text-left shadow-sm ring-1 ring-charcoal/5"
     >
       <div className="mb-2 flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full bg-sage" />
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">
           Now
         </span>
         {item.isShifted && (
-          <span className="rounded-full bg-slate-900/5 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-slate-400">
+          <span className="rounded-full bg-charcoal/10 px-2 py-0.5 text-[11px] font-medium text-muted">
             Shifted
           </span>
         )}
@@ -53,20 +53,20 @@ export function NowCard({
             e.stopPropagation()
             onOptions(item)
           }}
-          className="ml-auto shrink-0 rounded-lg p-1.5 text-slate-400/70 hover:text-slate-500 dark:text-slate-500 dark:hover:text-slate-400"
+          className="ml-auto shrink-0 rounded-lg p-1.5 text-muted hover:text-charcoal"
         >
           ⋯
         </button>
       </div>
 
       {item.activity.isAwaken && (
-        <p className="mb-0.5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <p className="mb-0.5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted">
           <IconSun width={14} height={14} className="shrink-0" />
           AWAKEN
         </p>
       )}
       {item.activity.isFocusSession && (
-        <p className="mb-0.5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <p className="mb-0.5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted">
           <IconTarget width={14} height={14} className="shrink-0" />
           Session {sessionNumbers.get(item.activity.id) ?? '—'}
         </p>
