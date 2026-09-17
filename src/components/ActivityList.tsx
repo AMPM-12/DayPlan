@@ -237,19 +237,19 @@ export function ActivityList({
             onPointerUp={handleRowPointerUpOrCancel}
             onPointerCancel={handleRowPointerUpOrCancel}
             onClick={() => handleRowClick(activity)}
-            className="flex w-full items-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
+            className="flex w-full items-center gap-2 rounded-2xl bg-cream px-4 py-3.5 text-left shadow-sm ring-1 ring-charcoal/5"
           >
-            <div className="w-14 shrink-0 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <div className="w-14 shrink-0 font-mono text-xs font-semibold text-muted">
               {formatClock(parseTimeToMinutes(activity.startTime))}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <CategoryDot category={activity.category} />
-                <p className="truncate font-medium text-slate-800 dark:text-slate-100">
+                <p className="truncate font-medium text-charcoal">
                   {activity.title}
                 </p>
                 {activity.isFlexible && (
-                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                  <span className="shrink-0 rounded-full bg-charcoal/5 px-2 py-0.5 text-[10px] font-medium text-muted">
                     Flexible
                   </span>
                 )}
@@ -260,7 +260,7 @@ export function ActivityList({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="font-mono text-xs text-muted">
                 {formatDuration(activity.durationMin)}
               </p>
             </div>
@@ -269,7 +269,7 @@ export function ActivityList({
               aria-label="Drag to reorder"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => handleHandlePointerDown(e, activity.id)}
-              className="shrink-0 touch-none rounded-lg p-2 text-slate-300 dark:text-slate-600"
+              className="shrink-0 touch-none rounded-lg p-2 text-muted"
             >
               ⠿
             </button>
@@ -295,21 +295,21 @@ export function ActivityList({
           }}
           className="flex items-center gap-2 rounded-2xl bg-cream px-4 py-3.5 text-left shadow-xl ring-1 ring-sage/40"
         >
-          <div className="w-14 shrink-0 text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <div className="w-14 shrink-0 font-mono text-xs font-semibold text-muted">
             {formatClock(parseTimeToMinutes(draggedActivity.startTime))}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <CategoryDot category={draggedActivity.category} />
-              <p className="truncate font-medium text-slate-800 dark:text-slate-100">
+              <p className="truncate font-medium text-charcoal">
                 {draggedActivity.title}
               </p>
             </div>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="font-mono text-xs text-muted">
               {formatDuration(draggedActivity.durationMin)}
             </p>
           </div>
-          <span className="shrink-0 p-2 text-slate-300 dark:text-slate-600">⠿</span>
+          <span className="shrink-0 p-2 text-muted">⠿</span>
         </div>
       )}
     </div>

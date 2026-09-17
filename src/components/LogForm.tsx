@@ -84,19 +84,19 @@ export function LogForm({
   return (
     <div className="space-y-5">
       {isFocusSession && docket && docket.length > 0 && (
-        <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
-          <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">Docket</p>
+        <div className="rounded-2xl bg-charcoal/5 p-4">
+          <p className="mb-2 text-sm font-medium text-charcoal">Docket</p>
           <ul className="space-y-1.5">
             {docket.map((task) => (
               <li
                 key={task.id}
-                className="flex items-center justify-between gap-2 text-sm text-slate-600 dark:text-slate-400"
+                className="flex items-center justify-between gap-2 text-sm text-charcoal"
               >
                 <span className="min-w-0 truncate">
                   {STATUS_LABEL[task.status]} {resolveDocketTaskTitle(task, planTasks ?? [])}
                 </span>
                 {task.id in taskMinutes ? (
-                  <span className="flex shrink-0 items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="flex shrink-0 items-center gap-1 text-xs text-muted">
                     <input
                       type="number"
                       min={0}
@@ -106,12 +106,12 @@ export function LogForm({
                         setTaskMinutes((prev) => ({ ...prev, [task.id]: Number(e.target.value) }))
                       }
                       aria-label={`Actual minutes for ${resolveDocketTaskTitle(task, planTasks ?? [])}`}
-                      className="w-14 rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-center text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      className="w-14 rounded-lg border border-muted/30 bg-cream px-1.5 py-1 text-center text-charcoal"
                     />
                     min
                   </span>
                 ) : (
-                  <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="shrink-0 font-mono text-xs text-muted">
                     {formatDuration(task.plannedMinutes)} planned
                   </span>
                 )}
@@ -126,29 +126,29 @@ export function LogForm({
         onClick={() => setCompletedAsPlanned((v) => !v)}
         className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
           completedAsPlanned
-            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-            : 'border-slate-200 dark:border-slate-700'
+            ? 'border-sage bg-sage/10'
+            : 'border-muted/30'
         }`}
       >
         <span
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${
-            completedAsPlanned ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+            completedAsPlanned ? 'bg-sage text-white' : 'bg-charcoal/10'
           }`}
         >
           {completedAsPlanned ? '✓' : ''}
         </span>
         <div>
-          <p className="font-medium text-slate-900 dark:text-slate-100">
+          <p className="font-medium text-charcoal">
             Completed as planned
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-muted">
             Tap off if you spent time differently
           </p>
         </div>
       </button>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
           Minutes spent on the intended activity
         </span>
         <input
@@ -157,14 +157,14 @@ export function LogForm({
           inputMode="numeric"
           value={intendedMinutesSpent}
           onChange={(e) => setIntendedMinutesSpent(Number(e.target.value))}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
         />
       </label>
 
       {!completedAsPlanned && (
         <>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="mb-1.5 block text-sm font-medium text-charcoal">
               What did you actually spend time on?
             </span>
             <input
@@ -172,12 +172,12 @@ export function LogForm({
               value={actualActivityTitle}
               onChange={(e) => setActualActivityTitle(e.target.value)}
               placeholder="e.g. Answering emails"
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
             />
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="mb-1.5 block text-sm font-medium text-charcoal">
               Minutes spent on that instead
             </span>
             <input
@@ -186,7 +186,7 @@ export function LogForm({
               inputMode="numeric"
               value={actualMinutesSpent}
               onChange={(e) => setActualMinutesSpent(Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
             />
           </label>
         </>
@@ -195,13 +195,13 @@ export function LogForm({
       {isFocusSession ? (
         <>
           <div>
-            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="mb-1.5 block text-sm font-medium text-charcoal">
               Productivity
             </span>
             <RatingBar min={1} max={10} value={productivityScore} onChange={setProductivityScore} />
           </div>
           <div>
-            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="mb-1.5 block text-sm font-medium text-charcoal">
               Discipline
             </span>
             <RatingBar min={1} max={10} value={disciplineScore} onChange={setDisciplineScore} />
@@ -209,7 +209,7 @@ export function LogForm({
         </>
       ) : (
         <div>
-          <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span className="mb-1.5 block text-sm font-medium text-charcoal">
             Honest rating — how do you feel about this block?
           </span>
           <RatingBar value={rating} onChange={setRating} />
@@ -217,14 +217,14 @@ export function LogForm({
       )}
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Notes <span className="font-normal text-slate-400">(optional)</span>
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
+          Notes <span className="font-normal text-muted">(optional)</span>
         </span>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
         />
       </label>
 
@@ -232,14 +232,14 @@ export function LogForm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-xl bg-slate-100 py-3.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="flex-1 rounded-xl bg-charcoal/5 py-3.5 font-medium text-charcoal"
         >
           Cancel
         </button>
         <button
           type="button"
           onClick={handleSave}
-          className="flex-1 rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
+          className="flex-1 rounded-xl bg-sage py-3.5 font-semibold text-white"
         >
           {initial ? 'Save changes' : 'Save log'}
         </button>

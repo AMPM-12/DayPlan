@@ -18,8 +18,8 @@ export function RatingBar({
           onClick={() => onChange(n)}
           className={`h-11 flex-1 rounded-lg text-xs font-medium transition-colors ${
             value === n
-              ? 'bg-indigo-600 text-white'
-              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+              ? 'bg-sage text-white'
+              : 'bg-charcoal/5 text-charcoal'
           }`}
         >
           {n}
