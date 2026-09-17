@@ -19,7 +19,7 @@ function Shell() {
   const hideNav = location.pathname === '/awaken'
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-full bg-cream">
       <Routes>
         <Route path="/" element={<TodayScreen />} />
         <Route path="/tasks" element={<TaskListScreen />} />
