@@ -108,7 +108,7 @@ export function TodayScreen() {
     !!optionsFor && today.activeSessionTimer?.activityId === optionsFor.activity.id
 
   return (
-    <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
+    <div className="mx-auto max-w-md px-4 pb-[calc(var(--bottom-nav-height)+1rem)] pt-[max(1.25rem,env(safe-area-inset-top))]">
       <header className="mb-5 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Today</h1>

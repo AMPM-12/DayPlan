@@ -23,7 +23,7 @@ export function BottomNav() {
   const location = useLocation()
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-muted/20 bg-cream/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-40 h-[var(--bottom-nav-height)] border-t border-muted/20 bg-cream/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       <div className="mx-auto flex max-w-md">
         {tabs.map((tab) => {
           const isActive =
