@@ -138,20 +138,20 @@ export function SessionCard({
         <button
           type="button"
           onClick={() => setLoggingOpen(true)}
-          className="w-full rounded-2xl bg-slate-50 p-4 text-left dark:bg-slate-800/60"
+          className="w-full rounded-2xl bg-charcoal/5 p-4 text-left"
         >
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Logged</span>
-            <span className="text-xs text-indigo-600 dark:text-indigo-400">Edit</span>
+            <span className="text-sm font-medium text-charcoal">Logged</span>
+            <span className="text-xs text-sage">Edit</span>
           </div>
-          <div className="flex gap-4 text-sm text-slate-600 dark:text-slate-300">
+          <div className="flex gap-4 text-sm text-charcoal">
             <span>Productivity: {log.productivityScore ?? '—'}/10</span>
             <span>Discipline: {log.disciplineScore ?? '—'}/10</span>
           </div>
           {docket.length > 0 && (
             <ul className="mt-2 space-y-1">
               {docket.map((task) => (
-                <li key={task.id} className="text-xs text-slate-400 dark:text-slate-500">
+                <li key={task.id} className="text-xs text-muted">
                   {STATUS_ICON[task.status]} {resolveDocketTaskTitle(task, planTasks)}
                 </li>
               ))}
@@ -160,9 +160,9 @@ export function SessionCard({
         </button>
       ) : isElapsed ? (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-slate-50 p-5 text-center dark:bg-slate-800/60">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Time's up</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <div className="rounded-2xl bg-charcoal/5 p-5 text-center">
+            <p className="text-sm font-medium text-muted">Time's up</p>
+            <p className="mt-1 text-lg font-semibold text-charcoal">
               {activeTask && resolveDocketTaskTitle(activeTask, planTasks)}
             </p>
           </div>
@@ -179,7 +179,7 @@ export function SessionCard({
                 <button
                   type="button"
                   onClick={beginComplete}
-                  className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white"
+                  className="w-full rounded-xl bg-sage py-3.5 font-semibold text-white"
                 >
                   Mark done &amp; next
                 </button>
@@ -187,7 +187,7 @@ export function SessionCard({
                 <button
                   type="button"
                   onClick={handleSkip}
-                  className="w-full rounded-xl py-2 text-sm font-medium text-slate-400 dark:text-slate-500"
+                  className="w-full rounded-xl py-2 text-sm font-medium text-muted"
                 >
                   Skip
                 </button>
@@ -198,7 +198,7 @@ export function SessionCard({
           <button
             type="button"
             onClick={() => setEditUpcomingOpen(true)}
-            className="w-full rounded-xl py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+            className="w-full rounded-xl py-2 text-sm font-medium text-sage"
           >
             Edit upcoming tasks
           </button>

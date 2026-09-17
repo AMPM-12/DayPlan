@@ -396,7 +396,7 @@ export function TaskList({
                         `${formatDuration(remaining)} left`
                       )}
                     </p>
-                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-900/10 dark:bg-white/10">
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-charcoal/10">
                       <div
                         className={`h-full rounded-full transition-all ${
                           isOver ? 'bg-red-500' : 'bg-sage'

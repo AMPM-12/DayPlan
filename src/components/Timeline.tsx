@@ -29,7 +29,11 @@ function TimelineRow({
         <div
           className={`mt-3.5 h-2.5 w-2.5 rounded-full ${isCurrent ? 'ring-4 ring-sage/30' : ''}`}
           style={{
-            backgroundColor: isCurrent ? 'var(--color-sage)' : isPast ? '#cbd5e1' : '#94a3b8',
+            backgroundColor: isCurrent
+              ? 'var(--color-sage)'
+              : isPast
+                ? 'color-mix(in oklab, var(--color-muted) 50%, transparent)'
+                : 'var(--color-muted)',
           }}
         />
         <div className="w-px flex-1 bg-slate-200 dark:bg-slate-700" />
