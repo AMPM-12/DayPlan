@@ -5,6 +5,7 @@ import { formatDuration, todayDateString } from '../utils/time'
 import { toCsv } from '../utils/csv'
 import { Sheet } from '../components/Sheet'
 import { LogForm } from '../components/LogForm'
+import { IconDownload, IconPrinter } from '../components/icons/CategoryIcons'
 
 type RangePreset = '7' | '30' | 'month' | 'custom'
 
@@ -124,20 +125,20 @@ export function ReportScreen() {
             <button
               type="button"
               onClick={handleExportCsv}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 text-base"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 text-charcoal"
               aria-label="Export CSV"
               title="Export CSV"
             >
-              ⬇️
+              <IconDownload width={18} height={18} />
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 text-base"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 text-charcoal"
               aria-label="Print report"
               title="Print"
             >
-              🖨️
+              <IconPrinter width={18} height={18} />
             </button>
           </div>
         )}
@@ -227,40 +228,41 @@ export function ReportScreen() {
                   key={log.id}
                   type="button"
                   onClick={() => setEditingLog(log)}
-                  className="w-full rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
+                  className="w-full rounded-2xl bg-cream px-4 py-3.5 text-left shadow-sm ring-1 ring-charcoal/5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-800 dark:text-slate-100">
+                      <p className="font-medium text-charcoal">
                         {log.activityTitle}
                       </p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">{log.date}</p>
+                      <p className="font-mono text-xs text-muted">{log.date}</p>
                     </div>
                     {typeof log.rating === 'number' && (
-                      <span className="shrink-0 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                      <span className="shrink-0 rounded-full bg-sage/10 px-2.5 py-1 text-xs font-semibold text-sage">
                         {log.rating}/10
                       </span>
                     )}
                   </div>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
                     <span>
                       {log.completedAsPlanned ? '✓ As planned' : '↺ Different activity'}
                     </span>
                     {typeof log.intendedMinutesSpent === 'number' && (
-                      <span>Intended: {formatDuration(log.intendedMinutesSpent)}</span>
+                      <span>Intended: <span className="font-mono">{formatDuration(log.intendedMinutesSpent)}</span></span>
                     )}
                     {!log.completedAsPlanned && log.actualActivityTitle && (
                       <span>
                         Actually: {log.actualActivityTitle}
-                        {typeof log.actualMinutesSpent === 'number' &&
-                          ` (${formatDuration(log.actualMinutesSpent)})`}
+                        {typeof log.actualMinutesSpent === 'number' && (
+                          <span className="font-mono"> ({formatDuration(log.actualMinutesSpent)})</span>
+                        )}
                       </span>
                     )}
                   </div>
 
                   {log.notes && (
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{log.notes}</p>
+                    <p className="mt-2 text-sm text-charcoal">{log.notes}</p>
                   )}
                 </button>
               ))}
@@ -294,9 +296,9 @@ export function ReportScreen() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5">
-      <p className="text-2xl font-bold text-slate-900 dark:text-slate-50">{value}</p>
-      <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</p>
+    <div className="rounded-2xl bg-cream p-4 shadow-sm ring-1 ring-charcoal/5">
+      <p className="text-2xl font-bold text-charcoal">{value}</p>
+      <p className="text-xs font-medium text-muted">{label}</p>
     </div>
   )
 }
