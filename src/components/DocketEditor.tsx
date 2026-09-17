@@ -370,14 +370,14 @@ export function DocketEditor({
         {others.map((task, i) => (
           <div key={task.id}>
             {drag && i === targetIndex && (
-              <div className="mb-2 h-1 rounded-full bg-indigo-400 dark:bg-indigo-500" />
+              <div className="mb-2 h-1 rounded-full bg-sage" />
             )}
             {editingTaskId === task.id ? (
-              <div className="space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+              <div className="space-y-2 rounded-xl bg-charcoal/5 p-3">
                 {editingTask?.taskId ? (
-                  <p className="rounded-lg bg-white px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <p className="rounded-lg bg-cream px-3 py-2 text-sm text-charcoal">
                     {resolveDocketTaskTitle(editingTask, planTasks)}
-                    <span className="ml-1.5 text-xs font-medium text-indigo-500 dark:text-indigo-400">
+                    <span className="ml-1.5 text-xs font-medium text-sage">
                       (from Tasks — rename it there)
                     </span>
                   </p>
@@ -393,7 +393,7 @@ export function DocketEditor({
                       }
                     }}
                     autoFocus
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    className="w-full rounded-lg border border-muted/30 bg-cream px-3 py-2 text-sm text-charcoal"
                   />
                 )}
                 <div className="flex gap-2">
@@ -403,19 +403,19 @@ export function DocketEditor({
                     inputMode="numeric"
                     value={editMinutes}
                     onChange={(e) => setEditMinutes(Number(e.target.value))}
-                    className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-2 text-center text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    className="w-20 rounded-lg border border-muted/30 bg-cream px-2 py-2 text-center text-sm text-charcoal"
                   />
                   <button
                     type="button"
                     onClick={() => setEditingTaskId(null)}
-                    className="flex-1 rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                    className="flex-1 rounded-lg bg-charcoal/5 py-2 text-sm font-medium text-charcoal"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={saveEdit}
-                    className="flex-1 rounded-lg bg-indigo-600 py-2 text-sm font-semibold text-white"
+                    className="flex-1 rounded-lg bg-sage py-2 text-sm font-semibold text-white"
                   >
                     Save
                   </button>
@@ -432,18 +432,18 @@ export function DocketEditor({
                 onPointerUp={handleRowPointerUpOrCancel}
                 onPointerCancel={handleRowPointerUpOrCancel}
                 onClick={() => handleRowClick(task)}
-                className={`flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60 ${allowEdit ? 'cursor-pointer' : ''}`}
+                className={`flex items-center gap-2 rounded-xl bg-charcoal/5 px-3 py-2 ${allowEdit ? 'cursor-pointer' : ''}`}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-charcoal">
                     <span className="truncate">{resolveDocketTaskTitle(task, planTasks)}</span>
                     {task.taskId && (
-                      <span className="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                      <span className="shrink-0 rounded-full bg-sage/10 px-1.5 py-0.5 text-[10px] font-medium text-sage">
                         ✅ Task
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="font-mono text-xs text-muted">
                     {formatDuration(task.plannedMinutes)}
                   </p>
                 </div>
@@ -454,7 +454,7 @@ export function DocketEditor({
                       aria-label="Drag to reorder"
                       onClick={(e) => e.stopPropagation()}
                       onPointerDown={(e) => handleHandlePointerDown(e, task.id)}
-                      className="touch-none rounded-lg p-1.5 text-slate-300 dark:text-slate-600"
+                      className="touch-none rounded-lg p-1.5 text-muted"
                     >
                       ⠿
                     </button>
@@ -465,7 +465,7 @@ export function DocketEditor({
                         removeTask(task.id)
                       }}
                       aria-label="Remove task"
-                      className="rounded-lg p-1.5 text-slate-400"
+                      className="rounded-lg p-1.5 text-muted"
                     >
                       ✕
                     </button>
@@ -476,7 +476,7 @@ export function DocketEditor({
           </div>
         ))}
         {drag && targetIndex === others.length && (
-          <div className="h-1 rounded-full bg-indigo-400 dark:bg-indigo-500" />
+          <div className="h-1 rounded-full bg-sage" />
         )}
 
         {drag && draggedTask && draggedRect && (
@@ -493,22 +493,22 @@ export function DocketEditor({
               zIndex: 50,
               pointerEvents: 'none',
             }}
-            className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-xl ring-1 ring-indigo-300 dark:bg-slate-800 dark:ring-indigo-500/50"
+            className="flex items-center gap-2 rounded-xl bg-cream px-3 py-2 shadow-xl ring-1 ring-sage/40"
           >
             <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+              <p className="flex items-center gap-1.5 text-sm font-medium text-charcoal">
                 <span className="truncate">{resolveDocketTaskTitle(draggedTask, planTasks)}</span>
                 {draggedTask.taskId && (
-                  <span className="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                  <span className="shrink-0 rounded-full bg-sage/10 px-1.5 py-0.5 text-[10px] font-medium text-sage">
                     ✅ Task
                   </span>
                 )}
               </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="font-mono text-xs text-muted">
                 {formatDuration(draggedTask.plannedMinutes)}
               </p>
             </div>
-            <span className="shrink-0 p-1.5 text-slate-300 dark:text-slate-600">⠿</span>
+            <span className="shrink-0 p-1.5 text-muted">⠿</span>
           </div>
         )}
       </div>
@@ -525,7 +525,7 @@ export function DocketEditor({
             }
           }}
           placeholder="Task title"
-          className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="min-w-0 flex-1 rounded-xl border border-muted/30 bg-cream px-3 py-2.5 text-sm text-charcoal"
         />
         <input
           type="number"
@@ -533,12 +533,12 @@ export function DocketEditor({
           inputMode="numeric"
           value={minutes}
           onChange={(e) => setMinutes(Number(e.target.value))}
-          className="w-16 shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-center text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-16 shrink-0 rounded-xl border border-muted/30 bg-cream px-2 py-2.5 text-center text-sm text-charcoal"
         />
         <button
           type="button"
           onClick={addTask}
-          className="shrink-0 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="shrink-0 rounded-xl bg-charcoal/5 px-4 py-2.5 text-sm font-medium text-charcoal"
         >
           Add
         </button>
@@ -547,15 +547,15 @@ export function DocketEditor({
       <button
         type="button"
         onClick={() => setPickerOpen((v) => !v)}
-        className="w-full rounded-xl py-2 text-center text-sm font-medium text-indigo-600 dark:text-indigo-400"
+        className="w-full rounded-xl py-2 text-center text-sm font-medium text-sage"
       >
         {pickerOpen ? 'Close' : '+ Add from Tasks'}
       </button>
 
       {pickerOpen && (
-        <div className="space-y-1.5 rounded-xl bg-slate-50 p-2 dark:bg-slate-800/60">
+        <div className="space-y-1.5 rounded-xl bg-charcoal/5 p-2">
           {incompletePlanTasks.length === 0 ? (
-            <p className="px-2 py-1.5 text-center text-xs text-slate-400 dark:text-slate-500">
+            <p className="px-2 py-1.5 text-center text-xs text-muted">
               No open tasks — add some in the Tasks tab first.
             </p>
           ) : (
@@ -566,12 +566,12 @@ export function DocketEditor({
                   key={pt.id}
                   type="button"
                   onClick={() => addFromTask(pt)}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg bg-white px-3 py-2.5 text-left text-sm dark:bg-slate-800"
+                  className="flex w-full items-center justify-between gap-2 rounded-lg bg-cream px-3 py-2.5 text-left text-sm"
                 >
-                  <span className="min-w-0 truncate font-medium text-slate-700 dark:text-slate-200">
+                  <span className="min-w-0 truncate font-medium text-charcoal">
                     {pt.title}
                   </span>
-                  <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="shrink-0 font-mono text-xs text-muted">
                     {formatDuration(remaining)} left
                   </span>
                 </button>

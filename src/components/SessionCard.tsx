@@ -127,12 +127,12 @@ export function SessionCard({
   const timeLabel = `${formatClock(parseTimeToMinutes(activity.startTime))} · ${formatDuration(activity.durationMin)}`
 
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+    <div className="rounded-3xl bg-cream p-5 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
         Session {sessionNumber}
       </p>
-      <p className="font-semibold text-slate-900 dark:text-slate-100">{activity.title}</p>
-      <p className="mb-4 text-sm text-slate-400 dark:text-slate-500">{timeLabel}</p>
+      <p className="font-semibold text-charcoal">{activity.title}</p>
+      <p className="mb-4 font-mono text-sm text-muted">{timeLabel}</p>
 
       {log ? (
         <button
@@ -308,12 +308,12 @@ export function SessionCard({
           ) : docket.length > 0 ? (
             <DocketList docket={docket} planTasks={planTasks} />
           ) : (
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-muted">
               No docket was built for this session.
             </p>
           )}
           {docket.length > 0 && (
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="font-mono text-xs text-muted">
               {formatDuration(totalPlanned)} of {formatDuration(activity.durationMin)} planned
             </p>
           )}
@@ -323,14 +323,14 @@ export function SessionCard({
                 type="button"
                 onClick={() => docket[0] && onStartTask(docket[0].id)}
                 disabled={docket.length === 0 || anotherSessionActive}
-                className="w-full rounded-xl bg-indigo-600 py-3.5 font-semibold text-white disabled:opacity-40"
+                className="w-full rounded-xl bg-sage py-3.5 font-semibold text-white disabled:opacity-40"
               >
                 Start
               </button>
               <button
                 type="button"
                 onClick={() => setLoggingOpen(true)}
-                className="w-full rounded-xl py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+                className="w-full rounded-xl py-2 text-sm font-medium text-sage"
               >
                 Log this session
               </button>
