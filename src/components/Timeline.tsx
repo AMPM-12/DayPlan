@@ -26,11 +26,9 @@ function TimelineRow({
       </div>
       <div className="relative flex flex-col items-center">
         <div
-          className={`mt-3.5 h-2.5 w-2.5 rounded-full ${
-            isCurrent ? 'ring-4 ring-indigo-200 dark:ring-indigo-500/30' : ''
-          }`}
+          className={`mt-3.5 h-2.5 w-2.5 rounded-full ${isCurrent ? 'ring-4 ring-sage/30' : ''}`}
           style={{
-            backgroundColor: isCurrent ? '#4f46e5' : isPast ? '#cbd5e1' : '#94a3b8',
+            backgroundColor: isCurrent ? 'var(--color-sage)' : isPast ? '#cbd5e1' : '#94a3b8',
           }}
         />
         <div className="w-px flex-1 bg-slate-200 dark:bg-slate-700" />
@@ -38,9 +36,7 @@ function TimelineRow({
       <div
         onClick={() => onTap(item)}
         className={`mb-3 flex flex-1 items-start gap-2 rounded-2xl px-4 py-3 text-left transition-colors ${
-          isCurrent
-            ? 'bg-indigo-50 ring-1 ring-indigo-200 dark:bg-indigo-500/10 dark:ring-indigo-500/30'
-            : 'bg-cream ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5'
+          isCurrent ? 'bg-sage/10 ring-1 ring-sage/30' : 'bg-cream ring-1 ring-charcoal/5'
         } ${isPast ? 'opacity-50' : ''} cursor-pointer`}
       >
         <div className="min-w-0 flex-1">
@@ -115,7 +111,7 @@ export function Timeline({
           <button
             type="button"
             onClick={jumpToNow}
-            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400"
+            className="text-xs font-semibold text-sage"
           >
             Jump to now
           </button>
