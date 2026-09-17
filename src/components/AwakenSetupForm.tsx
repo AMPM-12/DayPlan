@@ -53,31 +53,31 @@ export function AwakenSetupForm({
   return (
     <div className="space-y-5">
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
           Title
         </span>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
         />
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
           Start time
         </span>
         <input
           type="time"
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-full rounded-xl border border-muted/30 bg-cream px-4 py-3 text-base text-charcoal"
         />
       </label>
 
       <div>
-        <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="mb-1.5 block text-sm font-medium text-charcoal">
           Total duration
         </span>
         <div className="flex flex-wrap gap-2">
@@ -88,8 +88,8 @@ export function AwakenSetupForm({
               onClick={() => setDurationMin(d)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium ${
                 durationMin === d
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                  ? 'bg-sage text-white'
+                  : 'bg-charcoal/5 text-charcoal'
               }`}
             >
               {d} min
@@ -101,13 +101,13 @@ export function AwakenSetupForm({
             inputMode="numeric"
             value={durationMin}
             onChange={(e) => setDurationMin(Number(e.target.value))}
-            className="w-20 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-center text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="w-20 rounded-full border border-muted/30 bg-cream px-3 py-1.5 text-center text-xs text-charcoal"
           />
         </div>
       </div>
 
-      <div className="rounded-2xl bg-indigo-50 p-4 text-center dark:bg-indigo-500/10">
-        <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
+      <div className="rounded-2xl bg-sage/10 p-4 text-center">
+        <p className="text-sm font-medium text-sage">
           {enabledCount} practice{enabledCount === 1 ? '' : 's'}
           {durations.length > 0 && `, ${formatMinSec(durations[0])} each`}
         </p>
@@ -116,7 +116,7 @@ export function AwakenSetupForm({
       <button
         type="button"
         onClick={() => setCustomizing((v) => !v)}
-        className="text-sm font-medium text-indigo-600 dark:text-indigo-400"
+        className="text-sm font-medium text-sage"
       >
         {customizing ? 'Hide practices ▴' : 'Customize practices ▾'}
       </button>
@@ -133,7 +133,7 @@ export function AwakenSetupForm({
           type="button"
           onClick={handleStartNow}
           disabled={!canSave}
-          className="w-full rounded-xl bg-indigo-50 py-3 font-semibold text-indigo-700 disabled:opacity-40 dark:bg-indigo-500/10 dark:text-indigo-300"
+          className="w-full rounded-xl bg-sage/10 py-3 font-semibold text-sage disabled:opacity-40"
         >
           ▶ Start Now
         </button>
@@ -152,7 +152,7 @@ export function AwakenSetupForm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-xl bg-slate-100 py-3.5 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="flex-1 rounded-xl bg-charcoal/5 py-3.5 font-medium text-charcoal"
         >
           Cancel
         </button>
@@ -160,7 +160,7 @@ export function AwakenSetupForm({
           type="button"
           onClick={handleSave}
           disabled={!canSave}
-          className="flex-1 rounded-xl bg-indigo-600 py-3.5 font-semibold text-white disabled:opacity-40"
+          className="flex-1 rounded-xl bg-sage py-3.5 font-semibold text-white disabled:opacity-40"
         >
           {initial ? 'Save' : 'Add to Schedule'}
         </button>

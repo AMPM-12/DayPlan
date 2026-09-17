@@ -34,7 +34,7 @@ export function AwakenPracticesEditor({
           <div
             key={p.id}
             className={`flex items-center gap-2 rounded-xl px-3 py-2 ${
-              p.enabled ? 'bg-slate-50 dark:bg-slate-800/60' : 'bg-slate-50/50 opacity-50 dark:bg-slate-800/30'
+              p.enabled ? 'bg-charcoal/5' : 'bg-charcoal/5 opacity-50'
             }`}
           >
             <button
@@ -42,7 +42,7 @@ export function AwakenPracticesEditor({
               onClick={() => toggleEnabled(p.id)}
               aria-label={p.enabled ? 'Disable practice' : 'Enable practice'}
               className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
-                p.enabled ? 'bg-indigo-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+                p.enabled ? 'bg-sage text-white' : 'bg-charcoal/10'
               }`}
             >
               {p.enabled ? '✓' : ''}
@@ -53,7 +53,7 @@ export function AwakenPracticesEditor({
                 value={p.title}
                 onChange={(e) => setTitle(p.id, e.target.value)}
                 disabled={!p.enabled}
-                className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-slate-700 focus:border-slate-200 focus:bg-white dark:text-slate-200 dark:focus:border-slate-700 dark:focus:bg-slate-800"
+                className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-charcoal focus:border-muted/30 focus:bg-cream"
               />
               <input
                 type="text"
@@ -61,11 +61,11 @@ export function AwakenPracticesEditor({
                 onChange={(e) => setPrompt(p.id, e.target.value)}
                 disabled={!p.enabled}
                 placeholder="Reminder (optional)"
-                className="w-full truncate rounded-lg border border-transparent bg-transparent px-2 py-0.5 text-xs text-slate-400 focus:border-slate-200 focus:bg-white focus:text-slate-600 dark:text-slate-500 dark:focus:border-slate-700 dark:focus:bg-slate-800 dark:focus:text-slate-300"
+                className="w-full truncate rounded-lg border border-transparent bg-transparent px-2 py-0.5 text-xs text-muted focus:border-muted/30 focus:bg-cream focus:text-charcoal"
               />
             </div>
             {duration !== undefined && (
-              <span className="shrink-0 text-xs tabular-nums text-slate-400 dark:text-slate-500">
+              <span className="shrink-0 font-mono text-xs tabular-nums text-muted">
                 {formatMinSec(duration)}
               </span>
             )}

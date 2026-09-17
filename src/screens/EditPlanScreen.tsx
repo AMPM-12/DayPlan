@@ -333,7 +333,7 @@ export function EditPlanScreen() {
       <Sheet open={managingProfiles} onClose={() => setManagingProfiles(false)} title="Profiles">
         <div className="space-y-2">
           {profiles.map((p) => (
-            <div key={p.id} className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60">
+            <div key={p.id} className="rounded-2xl bg-charcoal/5 p-3">
               {renamingId === p.id ? (
                 <div className="flex gap-2">
                   <input
@@ -341,7 +341,7 @@ export function EditPlanScreen() {
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
                     autoFocus
-                    className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    className="flex-1 rounded-xl border border-muted/30 bg-cream px-3 py-2 text-sm text-charcoal"
                   />
                   <button
                     type="button"
@@ -349,20 +349,20 @@ export function EditPlanScreen() {
                       renameProfile(p.id, renameValue.trim() || p.name)
                       setRenamingId(null)
                     }}
-                    className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white"
+                    className="rounded-xl bg-sage px-3 py-2 text-sm font-medium text-white"
                   >
                     Save
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate font-medium text-slate-800 dark:text-slate-100">
+                  <span className="truncate font-medium text-charcoal">
                     {p.name}
                     {p.id === defaultProfileId && (
-                      <span className="ml-1.5 text-xs font-normal text-slate-400">default</span>
+                      <span className="ml-1.5 text-xs font-normal text-muted">default</span>
                     )}
                   </span>
-                  <div className="flex shrink-0 gap-3 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                  <div className="flex shrink-0 gap-3 text-xs font-medium text-sage">
                     <button
                       type="button"
                       onClick={() => {
@@ -402,12 +402,12 @@ export function EditPlanScreen() {
                 }
               }}
               placeholder="New profile name"
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="flex-1 rounded-xl border border-muted/30 bg-cream px-3 py-2.5 text-sm text-charcoal"
             />
             <button
               type="button"
               onClick={handleAddProfile}
-              className="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="rounded-xl bg-charcoal/5 px-4 py-2.5 text-sm font-medium text-charcoal"
             >
               Add
             </button>
