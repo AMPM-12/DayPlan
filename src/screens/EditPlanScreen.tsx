@@ -15,6 +15,7 @@ import { Sheet } from '../components/Sheet'
 import { ActivityForm } from '../components/ActivityForm'
 import { AwakenSetupForm } from '../components/AwakenSetupForm'
 import { ActivityList } from '../components/ActivityList'
+import { IconSun } from '../components/icons/CategoryIcons'
 
 const WEEKDAYS: [Weekday, string][] = [
   ['mon', 'Monday'],
@@ -180,25 +181,26 @@ export function EditPlanScreen() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
+    <div className="mx-auto max-w-md px-4 pb-[calc(var(--bottom-nav-height)+1rem)] pt-[max(1.25rem,env(safe-area-inset-top))]">
       <header className="mb-5 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Your Plan</h1>
-          <p className="text-sm text-slate-400 dark:text-slate-500">Repeats every day</p>
+          <h1 className="text-xl font-bold text-charcoal">Your Plan</h1>
+          <p className="text-sm text-muted">Repeats every day</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setEditing('new-awaken')}
-            className="flex h-10 items-center justify-center rounded-full bg-slate-100 px-3.5 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+            className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-charcoal/5 px-3.5 text-sm font-medium text-charcoal"
             aria-label="Add AWAKEN"
           >
-            ☀️ AWAKEN
+            <IconSun width={16} height={16} className="shrink-0" />
+            AWAKEN
           </button>
           <button
             type="button"
             onClick={() => setEditing('new')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-xl font-semibold text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-sage text-xl font-semibold text-white"
             aria-label="Add activity"
           >
             +
@@ -214,8 +216,8 @@ export function EditPlanScreen() {
             onClick={() => setActiveProfileId(p.id)}
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
               p.id === activeProfileId
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                ? 'bg-sage text-white'
+                : 'bg-charcoal/5 text-charcoal'
             }`}
           >
             {p.name}
@@ -224,7 +226,7 @@ export function EditPlanScreen() {
         <button
           type="button"
           onClick={() => setManagingProfiles(true)}
-          className="shrink-0 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+          className="shrink-0 rounded-full bg-charcoal/5 px-3 py-1.5 text-xs font-medium text-muted"
         >
           Manage
         </button>
@@ -234,29 +236,29 @@ export function EditPlanScreen() {
         <button
           type="button"
           onClick={() => setMappingOpen(true)}
-          className="text-xs font-medium text-indigo-600 dark:text-indigo-400"
+          className="text-xs font-medium text-sage"
         >
           Which plan applies each day →
         </button>
         <button
           type="button"
           onClick={() => setBackupOpen(true)}
-          className="text-xs font-medium text-indigo-600 dark:text-indigo-400"
+          className="text-xs font-medium text-sage"
         >
           Backup & restore →
         </button>
         <button
           type="button"
           onClick={() => setNotifOpen(true)}
-          className="text-xs font-medium text-indigo-600 dark:text-indigo-400"
+          className="text-xs font-medium text-sage"
         >
           Notifications →
         </button>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="rounded-3xl bg-slate-100 p-6 text-center dark:bg-slate-800/60">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="rounded-3xl bg-charcoal/5 p-6 text-center">
+          <p className="text-sm font-medium text-muted">
             No activities yet. Tap + to add your first one.
           </p>
         </div>
