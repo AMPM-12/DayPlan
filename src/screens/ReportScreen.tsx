@@ -113,18 +113,18 @@ export function ReportScreen() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))]">
+    <div className="mx-auto max-w-md px-4 pb-[calc(var(--bottom-nav-height)+1rem)] pt-[max(1.25rem,env(safe-area-inset-top))]">
       <header className="mb-5 flex items-center justify-between no-print">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Report</h1>
-          <p className="text-sm text-slate-400 dark:text-slate-500">How you actually spent your time</p>
+          <h1 className="text-xl font-bold text-charcoal">Report</h1>
+          <p className="text-sm text-muted">How you actually spent your time</p>
         </div>
         {logs.length > 0 && (
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleExportCsv}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-base dark:bg-slate-800"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 text-base"
               aria-label="Export CSV"
               title="Export CSV"
             >
@@ -133,7 +133,7 @@ export function ReportScreen() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-base dark:bg-slate-800"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 text-base"
               aria-label="Print report"
               title="Print"
             >
@@ -158,8 +158,8 @@ export function ReportScreen() {
             onClick={() => setPreset(id)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium ${
               preset === id
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                ? 'bg-sage text-white'
+                : 'bg-charcoal/5 text-charcoal'
             }`}
           >
             {label}
@@ -170,33 +170,33 @@ export function ReportScreen() {
       {preset === 'custom' && (
         <div className="mb-5 flex gap-3 no-print">
           <label className="flex-1">
-            <span className="mb-1 block text-xs font-medium text-slate-500">From</span>
+            <span className="mb-1 block text-xs font-medium text-muted">From</span>
             <input
               type="date"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded-xl border border-muted/30 bg-cream px-3 py-2 text-sm text-charcoal"
             />
           </label>
           <label className="flex-1">
-            <span className="mb-1 block text-xs font-medium text-slate-500">To</span>
+            <span className="mb-1 block text-xs font-medium text-muted">To</span>
             <input
               type="date"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded-xl border border-muted/30 bg-cream px-3 py-2 text-sm text-charcoal"
             />
           </label>
         </div>
       )}
 
-      <p className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">
+      <p className="mb-3 font-mono text-sm font-medium text-muted">
         {start} – {end}
       </p>
 
       {!summary ? (
-        <div className="rounded-3xl bg-slate-100 p-6 text-center dark:bg-slate-800/60">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="rounded-3xl bg-charcoal/5 p-6 text-center">
+          <p className="text-sm font-medium text-muted">
             No logged blocks in this range yet. Use “Log this block” on the Today screen.
           </p>
         </div>
