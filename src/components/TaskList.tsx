@@ -270,7 +270,7 @@ export function TaskList({
     <div className="space-y-2">
       <div className="relative space-y-2">
         {others.length === 0 && !drag && (
-          <p className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate-400 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:text-slate-500 dark:ring-white/5">
+          <p className="rounded-2xl bg-cream px-4 py-6 text-center text-sm text-muted shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5">
             No tasks yet — add one below.
           </p>
         )}
@@ -285,20 +285,20 @@ export function TaskList({
           return (
             <div key={task.id}>
               {drag && i === targetIndex && (
-                <div className="mb-2 h-1 rounded-full bg-indigo-400 dark:bg-indigo-500" />
+                <div className="mb-2 h-1 rounded-full bg-sage" />
               )}
               {editingTaskId === task.id ? (
-                <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5">
+                <div className="space-y-3 rounded-2xl bg-cream p-4 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5">
                   <input
                     type="text"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
                     autoFocus
                     placeholder="Task title"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    className="w-full rounded-lg border border-muted/30 bg-cream px-3 py-2.5 text-sm text-charcoal"
                   />
                   <div className="flex gap-3">
-                    <label className="flex-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <label className="flex-1 text-xs font-medium text-muted">
                       Estimate (min)
                       <input
                         type="number"
@@ -306,10 +306,10 @@ export function TaskList({
                         inputMode="numeric"
                         value={editEstimate}
                         onChange={(e) => setEditEstimate(Number(e.target.value))}
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-center text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                        className="mt-1 w-full rounded-lg border border-muted/30 bg-cream px-2 py-2 text-center text-sm text-charcoal"
                       />
                     </label>
-                    <label className="flex-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <label className="flex-1 text-xs font-medium text-muted">
                       Spent (min)
                       <input
                         type="number"
@@ -317,7 +317,7 @@ export function TaskList({
                         inputMode="numeric"
                         value={editSpent}
                         onChange={(e) => setEditSpent(Number(e.target.value))}
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-center text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                        className="mt-1 w-full rounded-lg border border-muted/30 bg-cream px-2 py-2 text-center text-sm text-charcoal"
                       />
                     </label>
                   </div>
@@ -335,14 +335,14 @@ export function TaskList({
                     <button
                       type="button"
                       onClick={() => setEditingTaskId(null)}
-                      className="flex-1 rounded-lg bg-slate-100 py-2.5 text-sm font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                      className="flex-1 rounded-lg bg-charcoal/5 py-2.5 text-sm font-medium text-charcoal"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={saveEdit}
-                      className="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white"
+                      className="flex-1 rounded-lg bg-sage py-2.5 text-sm font-semibold text-white"
                     >
                       Save
                     </button>
@@ -359,7 +359,7 @@ export function TaskList({
                   onPointerUp={handleRowPointerUpOrCancel}
                   onPointerCancel={handleRowPointerUpOrCancel}
                   onClick={() => handleRowClick(task)}
-                  className="flex cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-800/40 dark:ring-white/5"
+                  className="flex cursor-pointer items-center gap-3 rounded-2xl bg-cream px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5"
                 >
                   <button
                     type="button"
@@ -371,7 +371,7 @@ export function TaskList({
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
                       task.completed
                         ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : 'border-slate-300 text-transparent dark:border-slate-600'
+                        : 'border-muted/30 text-transparent'
                     }`}
                   >
                     ✓
@@ -379,13 +379,13 @@ export function TaskList({
 
                   <div className="min-w-0 flex-1">
                     <p
-                      className={`truncate font-medium text-slate-800 dark:text-slate-100 ${
-                        task.completed ? 'line-through decoration-slate-400' : ''
+                      className={`truncate font-medium text-charcoal ${
+                        task.completed ? 'line-through decoration-muted' : ''
                       }`}
                     >
                       {task.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                    <p className="mt-0.5 text-xs text-muted">
                       Est {formatDuration(task.estimatedMinutes)} · Spent{' '}
                       {formatDuration(task.timeSpentMinutes)} ·{' '}
                       {isOver ? (
@@ -399,7 +399,7 @@ export function TaskList({
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-900/10 dark:bg-white/10">
                       <div
                         className={`h-full rounded-full transition-all ${
-                          isOver ? 'bg-red-500' : 'bg-indigo-600'
+                          isOver ? 'bg-red-500' : 'bg-sage'
                         }`}
                         style={{ width: `${isOver ? 100 : pct}%` }}
                       />
@@ -411,7 +411,7 @@ export function TaskList({
                     aria-label="Drag to reorder"
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => handleHandlePointerDown(e, task.id)}
-                    className="shrink-0 touch-none rounded-lg p-2 text-slate-300 dark:text-slate-600"
+                    className="shrink-0 touch-none rounded-lg p-2 text-muted"
                   >
                     ⠿
                   </button>
@@ -421,7 +421,7 @@ export function TaskList({
           )
         })}
         {drag && targetIndex === others.length && (
-          <div className="h-1 rounded-full bg-indigo-400 dark:bg-indigo-500" />
+          <div className="h-1 rounded-full bg-sage" />
         )}
 
         {drag && draggedTask && draggedRect && (
@@ -437,24 +437,24 @@ export function TaskList({
               zIndex: 50,
               pointerEvents: 'none',
             }}
-            className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3.5 shadow-xl ring-1 ring-indigo-300 dark:bg-slate-800 dark:ring-indigo-500/50"
+            className="flex items-center gap-3 rounded-2xl bg-cream px-4 py-3.5 shadow-xl ring-1 ring-sage/40"
           >
             <div
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
                 draggedTask.completed
                   ? 'border-emerald-500 bg-emerald-500 text-white'
-                  : 'border-slate-300 text-transparent dark:border-slate-600'
+                  : 'border-muted/30 text-transparent'
               }`}
             >
               ✓
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-slate-800 dark:text-slate-100">{draggedTask.title}</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="truncate font-medium text-charcoal">{draggedTask.title}</p>
+              <p className="text-xs text-muted">
                 Est {formatDuration(draggedTask.estimatedMinutes)}
               </p>
             </div>
-            <span className="shrink-0 p-2 text-slate-300 dark:text-slate-600">⠿</span>
+            <span className="shrink-0 p-2 text-muted">⠿</span>
           </div>
         )}
       </div>
@@ -471,7 +471,7 @@ export function TaskList({
             }
           }}
           placeholder="Add a task"
-          className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="min-w-0 flex-1 rounded-xl border border-muted/30 bg-cream px-3 py-3 text-sm text-charcoal"
         />
         <input
           type="number"
@@ -480,12 +480,12 @@ export function TaskList({
           value={minutes}
           onChange={(e) => setMinutes(Number(e.target.value))}
           aria-label="Estimated minutes"
-          className="w-16 shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-3 text-center text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="w-16 shrink-0 rounded-xl border border-muted/30 bg-cream px-2 py-3 text-center text-sm text-charcoal"
         />
         <button
           type="button"
           onClick={addTask}
-          className="shrink-0 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white"
+          className="shrink-0 rounded-xl bg-sage px-5 py-3 text-sm font-semibold text-white"
         >
           Add
         </button>
